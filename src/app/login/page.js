@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/app/services/auth-context";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -147,13 +148,13 @@ export default function LoginPage() {
         <div className="text-center">
           <p className="text-xs text-gray-500">
             By signing in, you agree to our{" "}
-            <a href="/terms" className="underline hover:text-gray-700">
+            <Link href="/terms" className="underline hover:text-gray-700">
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a href="/privacy" className="underline hover:text-gray-700">
+            <Link href="/privacy" className="underline hover:text-gray-700">
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

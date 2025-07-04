@@ -16,6 +16,31 @@ import {
   Award,
   RefreshCw,
 } from "lucide-react";
+// Chart.js imports
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line, Bar } from "react-chartjs-2";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function AnalyticsPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -100,6 +125,37 @@ export default function AnalyticsPage() {
     return new Date(timeString).toLocaleString();
   };
 
+  // Prepare chart data
+  const quizLabels = analytics.map((a) => formatTime(a.last_updated));
+  const quizAttempts = analytics.map((a) => a.total_quizzes_attempted || 0);
+  const avgScores = analytics.map((a) => a.average_quiz_score || 0);
+
+  const quizData = {
+    labels: quizLabels,
+    datasets: [
+      {
+        label: "Quiz Attempts",
+        data: quizAttempts,
+        borderColor: "rgb(75, 192, 192)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const scoreData = {
+    labels: quizLabels,
+    datasets: [
+      {
+        label: "Average Quiz Score",
+        data: avgScores,
+        borderColor: "rgb(153, 102, 255)",
+        backgroundColor: "rgba(153, 102, 255, 0.2)",
+        tension: 0.4,
+      },
+    ],
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -159,106 +215,31 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Analytics Data */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* User Analytics */}
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            User Analytics
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Quiz Attempts Over Time
           </h2>
-
-          {analytics.length > 0 ? (
-            <div className="space-y-4">
-              {analytics.slice(0, 5).map((analytic, index) => (
-                <div
-                  key={analytic.id || index}
-                  className="p-4 bg-gray-50 rounded-lg"
-                >
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-500">
-                        User ID:
-                      </span>
-                      <span className="ml-2 text-gray-900">
-                        {analytic.user || "N/A"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-500">
-                        Last Updated:
-                      </span>
-                      <span className="ml-2 text-gray-900">
-                        {formatTime(analytic.last_updated)}
-                      </span>
-                    </div>
-                    {analytic.total_quizzes_attempted && (
-                      <div>
-                        <span className="font-medium text-gray-500">
-                          Quizzes Attempted:
-                        </span>
-                        <span className="ml-2 text-gray-900">
-                          {analytic.total_quizzes_attempted}
-                        </span>
-                      </div>
-                    )}
-                    {analytic.average_quiz_score && (
-                      <div>
-                        <span className="font-medium text-gray-500">
-                          Avg Score:
-                        </span>
-                        <span className="ml-2 text-gray-900">
-                          {analytic.average_quiz_score}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No analytics data available yet.</p>
-              <p className="text-sm text-gray-400 mt-2">
-                Start learning to see your progress here!
-              </p>
-            </div>
-          )}
+          <Line
+            data={quizData}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: "top" } },
+            }}
+          />
         </div>
-
-        {/* Dashboard Data */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Performance Overview
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Average Quiz Score Over Time
           </h2>
-
-          {dashboardData ? (
-            <div className="space-y-4">
-              {/* Display dashboard data if available */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(dashboardData, null, 2)}
-                </pre>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">
-                Dashboard data will appear here once available.
-              </p>
-              <Button
-                onClick={updateAnalytics}
-                disabled={refreshing}
-                className="mt-4"
-                variant="outline"
-              >
-                Generate Analytics
-              </Button>
-            </div>
-          )}
+          <Line
+            data={scoreData}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: "top" } },
+            }}
+          />
         </div>
       </div>
 
