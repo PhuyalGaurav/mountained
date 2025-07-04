@@ -14,6 +14,7 @@ import {
   BarChart3,
   Moon,
   Sun,
+  GalleryHorizontalEnd,
 } from "lucide-react";
 import { useTheme } from "@/app/services/theme-context";
 import Image from "next/image";
@@ -43,6 +44,11 @@ const sideBarItems = [
     name: "Profile",
     href: "/profile",
     icon: User,
+  },
+  {
+    name: "Flashcards",
+    href: "/flashcards",
+    icon: GalleryHorizontalEnd,
   },
 ];
 
