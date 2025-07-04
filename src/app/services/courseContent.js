@@ -161,3 +161,7 @@ export const courseContentService = {
 };
 
 export default courseContentService;
+
+// Named export for convenience in UI components
+export const getCourseContent = (topicId) =>
+  courseContentService.getCourseContent(topicId);
