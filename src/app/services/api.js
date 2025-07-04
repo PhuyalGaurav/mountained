@@ -199,6 +199,8 @@ export const apiService = {
     api.post(`/learning-materials/${id}/generate_flashcards/`, data),
   generateQuiz: (id, data) =>
     api.post(`/learning-materials/${id}/generate_quiz/`, data),
+  generateQuizFromFile: (data) =>
+    api.post(`/learning-materials/generate_quiz_from_file/`, data),
   generateStudyTasks: (id, data) =>
     api.post(`/learning-materials/${id}/generate_study_tasks/`, data),
   generateSummary: (id, data) =>
@@ -227,7 +229,170 @@ export const apiService = {
   generateQuizQuestions: (id, data) =>
     api.post(`/quizzes/${id}/generate_questions/`, data),
   getQuizQuestions: (id) => api.get(`/quizzes/${id}/questions/`),
-  submitQuizAnswers: (id, data) => api.post(`/quizzes/${id}/submit_answers/`, data),
+  
+  // Quiz submission - try backend first, fallback to local calculation
+  submitQuizAnswers: async (quizId, answersData, questions) => {
+    console.log("=== API SERVICE SUBMISSION DEBUG ===");
+    console.log("Quiz ID:", quizId);
+    console.log("Answers data:", answersData);
+    console.log("Questions:", questions);
+    
+    // First, try to submit to the backend quiz submission endpoint
+    try {
+      console.log("Attempting to submit to backend quiz submission endpoint...");
+      const response = await api.post(`/quizzes/${quizId}/submit_answers/`, answersData);
+      console.log("✅ Backend submission successful:", response.data);
+      return response;
+    } catch (backendError) {
+      console.log("❌ Backend quiz submission failed:", backendError);
+      console.log("Status:", backendError.response?.status);
+      console.log("Error data:", backendError.response?.data);
+      
+      // If backend submission fails, fall back to local calculation and manual attempt creation
+      console.log("Falling back to local calculation and manual quiz attempt creation...");
+    }
+    
+    // Calculate quiz results locally
+    const questionAttempts = [];
+    let correctCount = 0;
+    
+    // Process each question and determine if the answer is correct
+    questions.forEach(question => {
+      const userAnswer = answersData.answers[question.id];
+      console.log(`Processing question ${question.id}:`, {
+        userAnswer,
+        correct_option: question.correct_option,
+        correct_answer: question.correct_answer,
+        question_text: question.question_text
+      });
+      
+      if (userAnswer) {
+        // Get the correct key (could be from correct_option or correct_answer field)
+        const correctKey = question.correct_option || question.correct_answer;
+        
+        // Direct comparison - userAnswer and correctKey should both be option keys (e.g., "a", "b", "c", "d")
+        const isCorrect = userAnswer === correctKey;
+        
+        console.log(`Question ${question.id} result:`, {
+          userAnswer,
+          correctKey,
+          isCorrect
+        });
+        
+        // Create minimal question attempt structure
+        questionAttempts.push({
+          question: question.id,
+          selected_option: userAnswer,
+          is_correct: isCorrect
+        });
+        
+        if (isCorrect) {
+          correctCount++;
+        }
+      }
+    });
+    
+    // Calculate score as percentage
+    const score = questions.length > 0 ? (correctCount / questions.length) * 100 : 0;
+    
+    console.log("Local calculation results:", {
+      score,
+      correctCount,
+      totalQuestions: questions.length,
+      questionAttempts
+    });
+    
+    // Try to create a quiz attempt record using the manual endpoint
+    try {
+      console.log("Attempting to create quiz attempt record...");
+      const attemptData = {
+        quiz: parseInt(quizId),
+        score: parseFloat(score.toFixed(2)),
+        question_attempts: questionAttempts
+      };
+      
+      console.log("Creating attempt with data:", attemptData);
+      const attemptResponse = await api.post("/quiz-attempts/", attemptData);
+      console.log("✅ Quiz attempt created successfully:", attemptResponse.data);
+      
+      return {
+        data: {
+          attempt_id: attemptResponse.data.id,
+          score: parseFloat(score.toFixed(2)),
+          total_questions: questions.length,
+          correct_answers: correctCount,
+          results: questionAttempts.map(qa => ({
+            question_id: qa.question,
+            is_correct: qa.is_correct,
+            selected_option: qa.selected_option,
+            user_answer: qa.selected_option
+          })),
+          _fallback_used: true,
+          _message: "Results calculated locally but saved to backend"
+        }
+      };
+    } catch (attemptError) {
+      console.error("❌ Failed to create quiz attempt record:", attemptError);
+      console.log("Attempt error status:", attemptError.response?.status);
+      console.log("Attempt error data:", attemptError.response?.data);
+      
+      // Complete fallback - just return local results without saving
+      const mockAttemptId = Date.now();
+      
+      return {
+        data: {
+          attempt_id: mockAttemptId,
+          score: parseFloat(score.toFixed(2)),
+          total_questions: questions.length,
+          correct_answers: correctCount,
+          results: questionAttempts.map(qa => ({
+            question_id: qa.question,
+            is_correct: qa.is_correct,
+            selected_option: qa.selected_option,
+            user_answer: qa.selected_option
+          })),
+          _mock_response: true,
+          _error: "Backend endpoints not available - results calculated locally only"
+        }
+      };
+    }
+  },
+
+  // Debug helper function to log quiz data
+  debugQuizData: (quizId, questions) => {
+    console.log("=== QUIZ DEBUG INFO ===");
+    console.log("Quiz ID:", quizId);
+    console.log("Total questions:", questions.length);
+    
+    questions.forEach((question, index) => {
+      console.log(`\n--- Question ${index + 1} (ID: ${question.id}) ---`);
+      console.log("Question text:", question.question_text);
+      console.log("Question type:", question.question_type);
+      console.log("Options:", question.options);
+      console.log("Options type:", typeof question.options);
+      console.log("Correct option:", question.correct_option);
+      console.log("Correct answer:", question.correct_answer);
+      
+      // Check if correct_option exists and is valid
+      if (!question.correct_option && !question.correct_answer) {
+        console.warn("⚠️ Missing correct answer data for question", question.id);
+      }
+      
+      // Check if options format is correct
+      if (question.options) {
+        if (typeof question.options === 'object' && !Array.isArray(question.options)) {
+          const optionKeys = Object.keys(question.options);
+          console.log("Option keys:", optionKeys);
+          
+          const correctKey = question.correct_option || question.correct_answer;
+          if (correctKey && !optionKeys.includes(correctKey)) {
+            console.warn(`⚠️ Correct key "${correctKey}" not found in option keys:`, optionKeys);
+          }
+        }
+      }
+    });
+    console.log("=== END QUIZ DEBUG ===\n");
+  },
 
   // Study Tasks
   getStudyTasks: () => api.get("/study-tasks/"),
