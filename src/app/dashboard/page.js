@@ -128,9 +128,11 @@ export default function DashboardPage() {
               <BookOpen className="h-8 w-8 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Courses</p>
+              <p className="text-sm font-medium text-gray-500">
+                Materials Created
+              </p>
               <p className="text-2xl font-semibold text-gray-900">
-                {stats.totalCourses}
+                {dashboardData?.total_materials_uploaded || 0}
               </p>
             </div>
           </div>
@@ -142,11 +144,9 @@ export default function DashboardPage() {
               <FileQuestion className="h-8 w-8 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
-                Quizzes Completed
-              </p>
+              <p className="text-sm font-medium text-gray-500">Total Quizzes</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {stats.completedQuizzes}
+                {dashboardData?.total_quizzes_taken || 0}
               </p>
             </div>
           </div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Average Score</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {stats.averageScore}%
+                {dashboardData?.average_quiz_score || 0}%
               </p>
             </div>
           </div>
@@ -172,9 +172,11 @@ export default function DashboardPage() {
               <Clock className="h-8 w-8 text-purple-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Study Streak</p>
+              <p className="text-sm font-medium text-gray-500">
+                Learning Streak
+              </p>
               <p className="text-2xl font-semibold text-gray-900">
-                {stats.studyStreak} days
+                {dashboardData?.learning_streak_days || 0} days
               </p>
             </div>
           </div>
@@ -183,73 +185,94 @@ export default function DashboardPage() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Activity */}
+        {/* Learning Progress */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Recent Activity
+            Learning Progress
           </h2>
-          {dashboardData && dashboardData.recent_activities ? (
-            <div className="space-y-4">
-              {dashboardData.recent_activities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-shrink-0">
-                    {activity.type === "quiz" ? (
-                      <FileQuestion className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <BookOpen className="h-5 w-5 text-blue-600" />
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {activity.timestamp}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <FileQuestion className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    Completed Math Quiz
-                  </p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
+          <div className="space-y-4">
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="flex-shrink-0">
+                <FileQuestion className="h-5 w-5 text-green-600" />
               </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    Started Physics Course
-                  </p>
-                  <p className="text-xs text-gray-500">1 day ago</p>
-                </div>
-              </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <FileQuestion className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    Completed Chemistry Quiz
-                  </p>
-                  <p className="text-xs text-gray-500">2 days ago</p>
-                </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  Total Quizzes Created
+                </p>
+                <p className="text-xs text-gray-500">
+                  {dashboardData?.total_quizzes_created || 0} quizzes
+                </p>
               </div>
             </div>
-          )}
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="flex-shrink-0">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  Study Tasks Progress
+                </p>
+                <p className="text-xs text-gray-500">
+                  {dashboardData?.total_study_tasks_completed || 0} completed of{" "}
+                  {dashboardData?.total_study_tasks_created || 0} tasks
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div className="flex-shrink-0">
+                <Clock className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  Total Study Time
+                </p>
+                <p className="text-xs text-gray-500">
+                  {Math.round(
+                    (dashboardData?.total_study_time_minutes || 0) / 60
+                  )}{" "}
+                  hours
+                </p>
+              </div>
+            </div>
+
+            {/* Improvement Areas */}
+            {(dashboardData?.weak_areas ||
+              dashboardData?.recommended_topics) && (
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-sm font-medium text-gray-900 mb-4">
+                  Areas for Improvement
+                </h3>
+                <div className="space-y-3">
+                  {Object.entries(dashboardData?.weak_areas || {}).map(
+                    ([area, score]) => (
+                      <div
+                        key={area}
+                        className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                      >
+                        <span className="text-sm text-gray-900">{area}</span>
+                        <span className="text-sm text-gray-500">
+                          Score: {score}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <h3 className="text-sm font-medium text-gray-900 mt-4 mb-3">
+                  Recommended Topics
+                </h3>
+                <div className="space-y-2">
+                  {Object.entries(dashboardData?.recommended_topics || {}).map(
+                    ([topic, relevance]) => (
+                      <div key={topic} className="text-sm text-gray-500">
+                        • {topic}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* User Profile */}
@@ -319,7 +342,7 @@ export default function DashboardPage() {
                     className="w-full justify-start"
                     variant="outline"
                   >
-                    <BookOpen className="h-4 w-4 mr-2" />
+                    <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
                     Browse Courses
                   </Button>
                   <Button
@@ -327,7 +350,7 @@ export default function DashboardPage() {
                     className="w-full justify-start"
                     variant="outline"
                   >
-                    <FileQuestion className="h-4 w-4 mr-2" />
+                    <FileQuestion className="h-4 w-4 mr-2 text-green-600" />
                     Take a Quiz
                   </Button>
                 </div>
