@@ -99,7 +99,7 @@ export function Sidebar() {
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                     isActive
                       ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                      : "text-gray-700 hover:bg-gray-1s00 hover:text-gray-900"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setIsOpen(false)}
                 >

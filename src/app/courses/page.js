@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/services/auth-context";
 import { apiService } from "@/app/services/api";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import {
   Users,
   Clock,
   Award,
+  Star,
 } from "lucide-react";
 
 export default function CoursesPage() {
+  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [topics, setTopics] = useState([]);
@@ -30,17 +33,7 @@ export default function CoursesPage() {
   const [grades, setGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCurriculumTopics();
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    filterTopics();
-  }, [topics, searchTerm, selectedGrade, selectedSubject]);
-
-  const fetchCurriculumTopics = async () => {
+  const fetchCurriculumTopics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getCurriculumTopics();
@@ -67,9 +60,9 @@ export default function CoursesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterTopics = () => {
+  const filterTopics = useCallback(() => {
     let filtered = topics;
 
     if (searchTerm) {
@@ -90,7 +83,17 @@ export default function CoursesPage() {
     }
 
     setFilteredTopics(filtered);
-  };
+  }, [topics, searchTerm, selectedGrade, selectedSubject]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCurriculumTopics();
+    }
+  }, [isAuthenticated, fetchCurriculumTopics]);
+
+  useEffect(() => {
+    filterTopics();
+  }, [filterTopics]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -263,40 +266,43 @@ export default function CoursesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredTopics.map((topic) => (
             <div
               key={topic.id}
-              className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer group"
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out cursor-pointer group"
+              onClick={() => router.push(`/courses/${topic.id}`)}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                      {topic.grade}
-                    </span>
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded ml-2">
-                      {topic.subject}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {topic.topic}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Unit: {topic.unit}
-                  </p>
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${getSubjectColor(
+                      topic.subject
+                    )}`}
+                  >
+                    {topic.subject}
+                  </span>
+                  <span className="ml-2 px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
+                    {topic.grade}
+                  </span>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-              </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 h-16 group-hover:text-blue-600 transition-colors">
+                  {topic.topic}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 h-10">
+                  Unit: {topic.unit}
+                </p>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="flex items-center text-sm text-gray-500">
-                  <Clock className="h-4 w-4 mr-1" />
-                  <span>Est. 2-3 hours</span>
+                <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-1.5 text-gray-400" />
+                    <span>Est. 2-3 hours</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 mr-1.5 text-yellow-400" />
+                    <span>4.8</span>
+                  </div>
                 </div>
-                <Button size="sm" variant="outline">
-                  Start Learning
-                </Button>
               </div>
             </div>
           ))}
@@ -305,3 +311,20 @@ export default function CoursesPage() {
     </div>
   );
 }
+
+const getSubjectColor = (subject) => {
+  switch (subject.toLowerCase()) {
+    case "mathematics":
+      return "bg-blue-100 text-blue-800";
+    case "science":
+      return "bg-green-100 text-green-800";
+    case "english":
+      return "bg-yellow-100 text-yellow-800";
+    case "social studies":
+      return "bg-purple-100 text-purple-800";
+    case "computer science":
+      return "bg-indigo-100 text-indigo-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
