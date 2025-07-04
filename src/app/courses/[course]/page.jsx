@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useAuth } from "@/app/services/auth-context";
 import { apiService } from "@/app/services/api";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 
 export default function CourseDetails({ params }) {
-  const { course: courseId } = params;
-  const { isAuthenticated, isLoading } = useAuth();
+  const resolvedParams = use(params);
+  const { course: courseId } = resolvedParams;
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -69,11 +70,20 @@ export default function CourseDetails({ params }) {
         apiService.getStudyTasks(),
       ]);
 
-      const filterByTopic = (item) =>
-        item.topic === parseInt(courseId) ||
-        item.topic?.id === parseInt(courseId);
+      console.log('All learning materials:', materialsResponse.data);
+      console.log('Current course ID:', courseId);
 
-      setLearningMaterials(materialsResponse.data.filter(filterByTopic));
+      const filterByTopic = (item) => {
+        const matches = item.topic === parseInt(courseId) ||
+          item.topic?.id === parseInt(courseId);
+        console.log(`Item ${item.id}: topic=${item.topic}, matches=${matches}`);
+        return matches;
+      };
+
+      const filteredMaterials = materialsResponse.data.filter(filterByTopic);
+      console.log('Filtered learning materials:', filteredMaterials);
+
+      setLearningMaterials(filteredMaterials);
       setQuizzes(quizzesResponse.data.filter(filterByTopic));
       setFlashcards(flashcardsResponse.data.filter(filterByTopic));
       setSummaries(summariesResponse.data.filter(filterByTopic));
@@ -94,63 +104,104 @@ export default function CourseDetails({ params }) {
     try {
       setGenerating((prev) => ({ ...prev, [type]: true }));
 
-      let response;
-      const data = { topic_id: parseInt(courseId) };
-
-      // Check if materialId exists
-      if (!materialId) {
-        throw new Error("No learning material available for content generation");
+      // Check if user exists
+      if (!user?.id) {
+        toast({
+          title: "User Error",
+          description: "Please log in again to generate content.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      switch (type) {
-        case "flashcards":
-          response = await apiService.generateFlashcards(materialId, data);
-          toast({
-            title: "Success",
-            description: "Flashcards generated successfully!",
-          });
-          break;
-        case "quiz":
-          response = await apiService.generateQuiz(materialId, data);
-          toast({
-            title: "Success",
-            description: "Quiz generated successfully!",
-          });
-          break;
-        case "studyTasks":
-          response = await apiService.generateStudyTasks(materialId, data);
-          toast({
-            title: "Success",
-            description: "Study tasks generated successfully!",
-          });
-          break;
-        case "summary":
-          response = await apiService.generateSummary(materialId, data);
-          toast({
-            title: "Success",
-            description: "Summary generated successfully!",
-          });
-          break;
-        default:
-          throw new Error("Unknown generation type");
+      const data = { 
+        topic_id: parseInt(courseId),
+        title: `${type === 'quiz' ? 'Quiz' : type === 'flashcards' ? 'Flashcards' : type === 'studyTasks' ? 'Study Tasks' : 'Summary'} for ${topic?.topic || 'Topic'}`,
+        difficulty: 'medium',
+        created_by: user.id
+      };
+
+      let response;
+
+      // If no materialId, create a basic learning material first or use topic-based generation
+      if (!materialId) {
+        console.log('No learning material found, attempting direct generation...');
+        // For now, let's try to generate without materialId and see what the API expects
+        switch (type) {
+          case "flashcards":
+            response = await apiService.createFlashcard(data);
+            break;
+          case "quiz":
+            response = await apiService.createQuiz(data);
+            break;
+          case "studyTasks":
+            response = await apiService.createStudyTask(data);
+            break;
+          case "summary":
+            response = await apiService.createSummary(data);
+            break;
+          default:
+            throw new Error("Unknown generation type");
+        }
+      } else {
+        switch (type) {
+          case "flashcards":
+            response = await apiService.generateFlashcards(materialId, data);
+            break;
+          case "quiz":
+            response = await apiService.generateQuiz(materialId, data);
+            break;
+          case "studyTasks":
+            response = await apiService.generateStudyTasks(materialId, data);
+            break;
+          case "summary":
+            response = await apiService.generateSummary(materialId, data);
+            break;
+          default:
+            throw new Error("Unknown generation type");
+        }
       }
 
       console.log(`${type} generation response:`, response.data);
       
+      toast({
+        title: "Success!",
+        description: `${type === 'quiz' ? 'Quiz' : type === 'flashcards' ? 'Flashcards' : type === 'studyTasks' ? 'Study Tasks' : 'Summary'} generated successfully!`,
+      });
+      
       // Refresh the page data after a short delay to allow backend processing
       setTimeout(() => {
         fetchCourseData();
-      }, 1500);
+      }, 2000);
       
     } catch (error) {
       console.error(`Error generating ${type}:`, error);
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.error || 
-                          error.message || 
-                          `Failed to generate ${type}. Please try again.`;
+      
+      // Handle specific backend errors
+      let errorMessage = "An unexpected error occurred.";
+      
+      if (error.response?.status === 500) {
+        if (error.response?.data?.detail?.includes('created_by')) {
+          errorMessage = "User authentication error. Please log out and log back in.";
+        } else {
+          errorMessage = "Server error occurred. The content generation service may be temporarily unavailable.";
+        }
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.detail || error.response?.data?.error || "Invalid request. Please check your input.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Learning material not found. Please try refreshing the page.";
+      } else if (error.response?.status === 401) {
+        errorMessage = "Authentication expired. Please log in again.";
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
-        title: "Error",
+        title: "Generation Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -280,7 +331,6 @@ export default function CourseDetails({ params }) {
               topic={topic}
               router={router}
               learningMaterialsExist={learningMaterials.length > 0}
-              materialId={learningMaterials[0]?.id}
             />
           )}
           {activeTab === "flashcards" && (
@@ -292,7 +342,6 @@ export default function CourseDetails({ params }) {
               }
               content={flashcards}
               learningMaterialsExist={learningMaterials.length > 0}
-              materialId={learningMaterials[0]?.id}
             />
           )}
           {activeTab === "summaries" && (
@@ -304,7 +353,6 @@ export default function CourseDetails({ params }) {
               }
               content={summaries}
               learningMaterialsExist={learningMaterials.length > 0}
-              materialId={learningMaterials[0]?.id}
             />
           )}
           {activeTab === "studyTasks" && (
@@ -316,7 +364,6 @@ export default function CourseDetails({ params }) {
               }
               content={studyTasks}
               learningMaterialsExist={learningMaterials.length > 0}
-              materialId={learningMaterials[0]?.id}
             />
           )}
         </div>
@@ -333,7 +380,6 @@ const ContentRenderer = ({
   topic,
   router,
   learningMaterialsExist,
-  materialId,
 }) => {
   const typeConfig = {
     quiz: {
@@ -374,7 +420,7 @@ const ContentRenderer = ({
       <div className="flex justify-end mb-4">
         <Button
           onClick={onGenerate}
-          disabled={generating || !learningMaterialsExist || !materialId}
+          disabled={generating}
           className="flex items-center justify-center gap-2"
         >
           {generating ? (
@@ -395,10 +441,10 @@ const ContentRenderer = ({
         <div className="text-center py-8">
           <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">
-            No learning materials available for content generation.
+            No content generated yet for this topic.
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Upload learning materials to enable AI-powered content generation.
+            Click the &quot;{config.generateButtonText}&quot; button above to create your first {config.title.toLowerCase()}.
           </p>
         </div>
       )}
@@ -407,6 +453,9 @@ const ContentRenderer = ({
         <div className="text-center py-8">
           <Icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">{config.emptyState}</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Click the &quot;{config.generateButtonText}&quot; button above to create your first {config.title.toLowerCase()}.
+          </p>
         </div>
       )}
 

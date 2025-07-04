@@ -1,44 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/services/auth-context";
 import { apiService } from "@/app/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 import {
-  FileQuestion,
-  Plus,
+  BookOpen,
   Search,
+  Filter,
   Clock,
+  Award,
   Star,
   Play,
-  Trophy,
-  Target,
-  BookOpen,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  User,
 } from "lucide-react";
 
 export default function QuizzesPage() {
+  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [quizzes, setQuizzes] = useState([]);
-  const [quizAttempts, setQuizAttempts] = useState([]);
+  const [filteredQuizzes, setFilteredQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchQuizzes();
-      fetchQuizAttempts();
-    }
-  }, [isAuthenticated]);
-
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getQuizzes();
       setQuizzes(response.data);
+      setFilteredQuizzes(response.data);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
       toast({
@@ -49,64 +47,38 @@ export default function QuizzesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchQuizAttempts = async () => {
-    try {
-      const response = await apiService.getQuizAttempts();
-      setQuizAttempts(response.data);
-    } catch (error) {
-      console.error("Error fetching quiz attempts:", error);
-    }
-  };
-
-  const createNewQuiz = async () => {
-    try {
-      const newQuiz = {
-        difficulty: "medium",
-        topic: null, // Will be selected by user
-      };
-      const response = await apiService.createQuiz(newQuiz);
-      toast({
-        title: "Success",
-        description: "New quiz created successfully!",
-      });
+  useEffect(() => {
+    if (isAuthenticated) {
       fetchQuizzes();
-    } catch (error) {
-      console.error("Error creating quiz:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create quiz. Please try again.",
-        variant: "destructive",
-      });
     }
+  }, [isAuthenticated, fetchQuizzes]);
+
+  useEffect(() => {
+    let filtered = quizzes;
+
+    if (searchTerm) {
+      filtered = filtered.filter((quiz) =>
+        quiz.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quiz.topic?.topic?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedDifficulty) {
+      filtered = filtered.filter((quiz) => quiz.difficulty === selectedDifficulty);
+    }
+
+    setFilteredQuizzes(filtered);
+  }, [quizzes, searchTerm, selectedDifficulty]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedDifficulty("");
   };
-
-  const getQuizScore = (quizId) => {
-    const attempts = quizAttempts.filter((attempt) => attempt.quiz === quizId);
-    if (attempts.length === 0) return null;
-    const bestScore = Math.max(...attempts.map((attempt) => attempt.score));
-    return bestScore;
-  };
-
-  const getAttemptCount = (quizId) => {
-    return quizAttempts.filter((attempt) => attempt.quiz === quizId).length;
-  };
-
-  const filteredQuizzes = quizzes.filter((quiz) => {
-    const matchesSearch =
-      !searchTerm ||
-      quiz.topic?.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quiz.topic?.subject?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesDifficulty =
-      !selectedDifficulty || quiz.difficulty === selectedDifficulty;
-
-    return matchesSearch && matchesDifficulty;
-  });
 
   const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
+    switch (difficulty?.toLowerCase()) {
       case "easy":
         return "bg-green-100 text-green-800";
       case "medium":
@@ -118,10 +90,15 @@ export default function QuizzesPage() {
     }
   };
 
-  const getScoreColor = (score) => {
-    if (score >= 90) return "text-green-600";
-    if (score >= 70) return "text-yellow-600";
-    return "text-red-600";
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed":
+        return "text-green-600";
+      case "in_progress":
+        return "text-yellow-600";
+      default:
+        return "text-gray-600";
+    }
   };
 
   if (isLoading) {
@@ -146,86 +123,10 @@ export default function QuizzesPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Quizzes</h1>
+            <h1 className="text-3xl font-bold text-gray-900">My Quizzes</h1>
             <p className="text-gray-600 mt-2">
-              Test your knowledge and track your progress
+              Practice with your AI-generated quizzes
             </p>
-          </div>
-          <Button
-            onClick={createNewQuiz}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Quiz
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileQuestion className="h-8 w-8 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Quizzes</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {quizzes.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Target className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Completed</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {quizzes.filter((quiz) => getAttemptCount(quiz.id) > 0).length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Trophy className="h-8 w-8 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Average Score</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {quizAttempts.length > 0
-                  ? Math.round(
-                      quizAttempts.reduce(
-                        (sum, attempt) => sum + attempt.score,
-                        0
-                      ) / quizAttempts.length
-                    )
-                  : 0}
-                %
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Play className="h-8 w-8 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">
-                Total Attempts
-              </p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {quizAttempts.length}
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -255,16 +156,69 @@ export default function QuizzesPage() {
           </select>
 
           {(searchTerm || selectedDifficulty) && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedDifficulty("");
-              }}
-            >
+            <Button variant="outline" onClick={clearFilters}>
               Clear Filters
             </Button>
           )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <BookOpen className="h-8 w-8 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Total Quizzes</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {quizzes.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Completed</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {quizzes.filter(q => q.status === 'completed').length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">In Progress</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {quizzes.filter(q => q.status === 'in_progress').length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Award className="h-8 w-8 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Filtered</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {filteredQuizzes.length}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -284,102 +238,71 @@ export default function QuizzesPage() {
         </div>
       ) : filteredQuizzes.length === 0 ? (
         <div className="text-center py-12">
-          <FileQuestion className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No quizzes found
           </h3>
-          <p className="text-gray-500">
-            Try adjusting your search criteria or create a new quiz.
+          <p className="text-gray-500 mb-4">
+            You haven&apos;t generated any quizzes yet.
           </p>
-          <Button onClick={createNewQuiz} className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Quiz
+          <Button onClick={() => router.push("/courses")}>
+            Generate Your First Quiz
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuizzes.map((quiz) => {
-            const score = getQuizScore(quiz.id);
-            const attempts = getAttemptCount(quiz.id);
-
-            return (
-              <div
-                key={quiz.id}
-                className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded ${getDifficultyColor(
-                          quiz.difficulty
-                        )}`}
-                      >
-                        {quiz.difficulty.charAt(0).toUpperCase() +
-                          quiz.difficulty.slice(1)}
-                      </span>
-                      {quiz.topic && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded ml-2">
-                          {quiz.topic.subject}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {quiz.topic?.topic || "General Quiz"}
-                    </h3>
-                    {quiz.topic && (
-                      <p className="text-sm text-gray-600 mb-3">
-                        {quiz.topic.unit} - Grade {quiz.topic.grade}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredQuizzes.map((quiz) => (
+            <div
+              key={quiz.id}
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out"
+            >
+              <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <BookOpen className="h-4 w-4 mr-1" />
-                    <span>{quiz.questions?.length || 0} questions</span>
-                  </div>
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(
+                      quiz.difficulty
+                    )}`}
+                  >
+                    {quiz.difficulty || 'Medium'}
+                  </span>
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="h-4 w-4 mr-1" />
-                    <span>~{(quiz.questions?.length || 0) * 2} min</span>
+                    <span>{quiz.questions?.length || 0} questions</span>
                   </div>
                 </div>
 
-                {score !== null && (
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Best Score:</span>
-                      <span
-                        className={`text-lg font-semibold ${getScoreColor(
-                          score
-                        )}`}
-                      >
-                        {Math.round(score)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Attempts:</span>
-                      <span className="text-sm font-medium">{attempts}</span>
-                    </div>
-                  </div>
-                )}
+                <h3 className="text-xl font-bold text-gray-900 mb-2 h-16">
+                  {quiz.title || `Quiz on ${quiz.topic?.topic || 'Topic'}`}
+                </h3>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <Button size="sm" variant="outline">
-                    <Play className="mr-2 h-4 w-4" />
-                    {attempts > 0 ? "Retake" : "Start Quiz"}
-                  </Button>
-                  {score !== null && score >= 80 && (
-                    <div className="flex items-center text-yellow-600">
-                      <Star className="h-4 w-4 mr-1" />
-                      <span className="text-xs font-medium">Mastered</span>
-                    </div>
-                  )}
+                <p className="text-sm text-gray-600 mb-4 h-10">
+                  {quiz.topic?.subject} - Grade {quiz.topic?.grade}
+                </p>
+
+                <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100 mb-4">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
+                    <span>{new Date(quiz.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <User className={`h-4 w-4 mr-1.5 ${getStatusColor(quiz.status)}`} />
+                    <span className={getStatusColor(quiz.status)}>
+                      {quiz.status === 'completed' ? 'Completed' : 
+                       quiz.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                    </span>
+                  </div>
                 </div>
+
+                <Button
+                  onClick={() => router.push(`/quizzes/${quiz.id}`)}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  {quiz.status === 'completed' ? 'Review Quiz' : 'Start Quiz'}
+                </Button>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

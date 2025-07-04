@@ -227,6 +227,7 @@ export const apiService = {
   generateQuizQuestions: (id, data) =>
     api.post(`/quizzes/${id}/generate_questions/`, data),
   getQuizQuestions: (id) => api.get(`/quizzes/${id}/questions/`),
+  submitQuizAnswers: (id, data) => api.post(`/quizzes/${id}/submit_answers/`, data),
 
   // Study Tasks
   getStudyTasks: () => api.get("/study-tasks/"),
