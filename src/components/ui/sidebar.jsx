@@ -78,7 +78,7 @@ export function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
-          <div className="flex items-center justify-start h-16 px-4 bg-primary">
+          <div className="flex items-center justify-start h-16 px-6 pt-4 bg-primary">
             <Image
               src={
                 theme === "dark"
@@ -95,6 +95,10 @@ export function Sidebar() {
             </h3>
           </div>
 
+          <div
+            className="w-[90%] h-px border-b-2 border-red-800 m-auto py-2"
+            aria-hidden="true"
+          />
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {sideBarItems.map((item) => {
@@ -105,9 +109,9 @@ export function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-accent text-primary border-r-2 border-primary"
+                      ? "bg-orange/80 text-primary border-l-2 border-primary h-10 my-2 rounded-xl"
                       : "text-foreground hover:bg-accent hover:text-primary"
                   }`}
                   onClick={() => setIsOpen(false)}
