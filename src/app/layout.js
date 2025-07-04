@@ -2,6 +2,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthProvider } from "./services/auth-context";
+import { ThemeProvider } from "./services/theme-context";
 import { Toaster } from "../components/ui/toaster";
 import { ClientLayout } from "../components/ClientLayout";
 
@@ -13,11 +14,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <AuthProvider>
-          <ClientLayout>{children}</ClientLayout>
-          <Toaster />
-        </AuthProvider>
+      <body
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
+      >
+        <ThemeProvider>
+          <AuthProvider>
+            <ClientLayout>{children}</ClientLayout>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
