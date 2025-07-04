@@ -1,0 +1,1290 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "API",
+    "description": "API documentation",
+    "termsOfService": "https://www.google.com/policies/terms/",
+    "contact": { "email": "contact@yourapi.local" },
+    "license": { "name": "BSD License" },
+    "version": "v1"
+  },
+  "host": "backend.mountained.phuyalgaurav.com.np",
+  "schemes": ["https"],
+  "basePath": "/api",
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": { "Basic": { "type": "basic" } },
+  "security": [{ "Basic": [] }],
+  "paths": {
+    "/curriculum-topics/": {
+      "get": {
+        "operationId": "curriculum-topics_list",
+        "description": "API endpoint for viewing curriculum topics.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/CurriculumTopic" }
+            }
+          }
+        },
+        "tags": ["curriculum-topics"]
+      },
+      "parameters": []
+    },
+    "/curriculum-topics/{id}/": {
+      "get": {
+        "operationId": "curriculum-topics_read",
+        "description": "API endpoint for viewing curriculum topics.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CurriculumTopic" }
+          }
+        },
+        "tags": ["curriculum-topics"]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "A unique integer value identifying this Curriculum Topic.",
+          "required": true,
+          "type": "integer"
+        }
+      ]
+    },
+    "/exported-quizzes/": {
+      "get": {
+        "operationId": "exported-quizzes_list",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/ExportedQuiz" }
+            }
+          }
+        },
+        "tags": ["exported-quizzes"]
+      },
+      "post": {
+        "operationId": "exported-quizzes_create",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        },
+        "tags": ["exported-quizzes"]
+      },
+      "parameters": []
+    },
+    "/exported-quizzes/{id}/": {
+      "get": {
+        "operationId": "exported-quizzes_read",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        },
+        "tags": ["exported-quizzes"]
+      },
+      "put": {
+        "operationId": "exported-quizzes_update",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        },
+        "tags": ["exported-quizzes"]
+      },
+      "patch": {
+        "operationId": "exported-quizzes_partial_update",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/ExportedQuiz" }
+          }
+        },
+        "tags": ["exported-quizzes"]
+      },
+      "delete": {
+        "operationId": "exported-quizzes_delete",
+        "description": "API endpoint for exported quizzes.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["exported-quizzes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/flashcards/": {
+      "get": {
+        "operationId": "flashcards_list",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Flashcard" }
+            }
+          }
+        },
+        "tags": ["flashcards"]
+      },
+      "post": {
+        "operationId": "flashcards_create",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        },
+        "tags": ["flashcards"]
+      },
+      "parameters": []
+    },
+    "/flashcards/{id}/": {
+      "get": {
+        "operationId": "flashcards_read",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        },
+        "tags": ["flashcards"]
+      },
+      "put": {
+        "operationId": "flashcards_update",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        },
+        "tags": ["flashcards"]
+      },
+      "patch": {
+        "operationId": "flashcards_partial_update",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Flashcard" }
+          }
+        },
+        "tags": ["flashcards"]
+      },
+      "delete": {
+        "operationId": "flashcards_delete",
+        "description": "API endpoint for user's flashcards.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["flashcards"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/learning-materials/": {
+      "get": {
+        "operationId": "learning-materials_list",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/LearningMaterial" }
+            }
+          }
+        },
+        "tags": ["learning-materials"]
+      },
+      "post": {
+        "operationId": "learning-materials_create",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        },
+        "tags": ["learning-materials"]
+      },
+      "parameters": []
+    },
+    "/learning-materials/{id}/": {
+      "get": {
+        "operationId": "learning-materials_read",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        },
+        "tags": ["learning-materials"]
+      },
+      "put": {
+        "operationId": "learning-materials_update",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        },
+        "tags": ["learning-materials"]
+      },
+      "patch": {
+        "operationId": "learning-materials_partial_update",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/LearningMaterial" }
+          }
+        },
+        "tags": ["learning-materials"]
+      },
+      "delete": {
+        "operationId": "learning-materials_delete",
+        "description": "API endpoint for user's learning materials.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["learning-materials"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/personalized-curriculum/": {
+      "get": {
+        "operationId": "personalized-curriculum_list",
+        "description": "API endpoint for the user's personalized curriculum.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/PersonalizedCurriculum" }
+            }
+          }
+        },
+        "tags": ["personalized-curriculum"]
+      },
+      "parameters": []
+    },
+    "/personalized-curriculum/{id}/": {
+      "get": {
+        "operationId": "personalized-curriculum_read",
+        "description": "API endpoint for the user's personalized curriculum.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/PersonalizedCurriculum" }
+          }
+        },
+        "tags": ["personalized-curriculum"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/quiz-attempts/": {
+      "get": {
+        "operationId": "quiz-attempts_list",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/QuizAttempt" }
+            }
+          }
+        },
+        "tags": ["quiz-attempts"]
+      },
+      "post": {
+        "operationId": "quiz-attempts_create",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        },
+        "tags": ["quiz-attempts"]
+      },
+      "parameters": []
+    },
+    "/quiz-attempts/{id}/": {
+      "get": {
+        "operationId": "quiz-attempts_read",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        },
+        "tags": ["quiz-attempts"]
+      },
+      "put": {
+        "operationId": "quiz-attempts_update",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        },
+        "tags": ["quiz-attempts"]
+      },
+      "patch": {
+        "operationId": "quiz-attempts_partial_update",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/QuizAttempt" }
+          }
+        },
+        "tags": ["quiz-attempts"]
+      },
+      "delete": {
+        "operationId": "quiz-attempts_delete",
+        "description": "API endpoint for submitting and viewing quiz attempts.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["quiz-attempts"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/quizzes/": {
+      "get": {
+        "operationId": "quizzes_list",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Quiz" }
+            }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "post": {
+        "operationId": "quizzes_create",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "parameters": []
+    },
+    "/quizzes/{id}/": {
+      "get": {
+        "operationId": "quizzes_read",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "put": {
+        "operationId": "quizzes_update",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "patch": {
+        "operationId": "quizzes_partial_update",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "delete": {
+        "operationId": "quizzes_delete",
+        "description": "API endpoint for quizzes. Can be filtered by topic.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["quizzes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/quizzes/{id}/generate_questions/": {
+      "post": {
+        "operationId": "quizzes_generate_questions",
+        "description": "Manually trigger question generation for a quiz.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/quizzes/{id}/questions/": {
+      "get": {
+        "operationId": "quizzes_questions",
+        "description": "Get all questions for a quiz.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Quiz" }
+          }
+        },
+        "tags": ["quizzes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/study-tasks/": {
+      "get": {
+        "operationId": "study-tasks_list",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/StudyTask" }
+            }
+          }
+        },
+        "tags": ["study-tasks"]
+      },
+      "post": {
+        "operationId": "study-tasks_create",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        },
+        "tags": ["study-tasks"]
+      },
+      "parameters": []
+    },
+    "/study-tasks/{id}/": {
+      "get": {
+        "operationId": "study-tasks_read",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        },
+        "tags": ["study-tasks"]
+      },
+      "put": {
+        "operationId": "study-tasks_update",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        },
+        "tags": ["study-tasks"]
+      },
+      "patch": {
+        "operationId": "study-tasks_partial_update",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/StudyTask" }
+          }
+        },
+        "tags": ["study-tasks"]
+      },
+      "delete": {
+        "operationId": "study-tasks_delete",
+        "description": "API endpoint for user's study tasks.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["study-tasks"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/summaries/": {
+      "get": {
+        "operationId": "summaries_list",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Summary" }
+            }
+          }
+        },
+        "tags": ["summaries"]
+      },
+      "post": {
+        "operationId": "summaries_create",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        },
+        "tags": ["summaries"]
+      },
+      "parameters": []
+    },
+    "/summaries/{id}/": {
+      "get": {
+        "operationId": "summaries_read",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        },
+        "tags": ["summaries"]
+      },
+      "put": {
+        "operationId": "summaries_update",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        },
+        "tags": ["summaries"]
+      },
+      "patch": {
+        "operationId": "summaries_partial_update",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Summary" }
+          }
+        },
+        "tags": ["summaries"]
+      },
+      "delete": {
+        "operationId": "summaries_delete",
+        "description": "API endpoint for AI-generated summaries.",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["summaries"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/token/": {
+      "post": {
+        "operationId": "token_create",
+        "description": "Takes a set of user credentials and returns an access and refresh JSON web\ntoken pair to prove the authentication of those credentials.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/TokenObtainPair" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/TokenObtainPair" }
+          }
+        },
+        "tags": ["token"]
+      },
+      "parameters": []
+    },
+    "/token/refresh/": {
+      "post": {
+        "operationId": "token_refresh_create",
+        "description": "Takes a refresh type JSON web token and returns an access type JSON web\ntoken if the refresh token is valid.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/TokenRefresh" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/TokenRefresh" }
+          }
+        },
+        "tags": ["token"]
+      },
+      "parameters": []
+    },
+    "/user-progress/": {
+      "get": {
+        "operationId": "user-progress_list",
+        "description": "API endpoint for viewing user progress on topics.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/UserProgress" }
+            }
+          }
+        },
+        "tags": ["user-progress"]
+      },
+      "parameters": []
+    },
+    "/user-progress/{id}/": {
+      "get": {
+        "operationId": "user-progress_read",
+        "description": "API endpoint for viewing user progress on topics.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/UserProgress" }
+          }
+        },
+        "tags": ["user-progress"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/users/": {
+      "get": {
+        "operationId": "users_list",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/User" }
+            }
+          }
+        },
+        "tags": ["users"]
+      },
+      "parameters": []
+    },
+    "/users/{id}/": {
+      "get": {
+        "operationId": "users_read",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/User" }
+          }
+        },
+        "tags": ["users"]
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "A unique integer value identifying this user.",
+          "required": true,
+          "type": "integer"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "CurriculumTopic": {
+      "required": ["grade", "subject", "unit", "topic"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "grade": {
+          "title": "Grade",
+          "type": "string",
+          "maxLength": 10,
+          "minLength": 1
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string",
+          "maxLength": 50,
+          "minLength": 1
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "topic": {
+          "title": "Topic",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        }
+      }
+    },
+    "ExportedQuiz": {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "file": {
+          "title": "File",
+          "type": "string",
+          "readOnly": true,
+          "format": "uri"
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "quiz": { "title": "Quiz", "type": "integer", "x-nullable": true }
+      }
+    },
+    "Flashcard": {
+      "required": ["front", "back"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "front": {
+          "title": "Front",
+          "type": "string",
+          "maxLength": 255,
+          "minLength": 1
+        },
+        "back": { "title": "Back", "type": "string", "minLength": 1 },
+        "created_at": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "topic": { "title": "Topic", "type": "integer", "x-nullable": true }
+      }
+    },
+    "LearningMaterial": {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "topic": {
+          "title": "Topic",
+          "description": "The curriculum topic this material is mapped to by the AI.",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "file": {
+          "title": "File",
+          "type": "string",
+          "readOnly": true,
+          "format": "uri"
+        },
+        "extracted_text": {
+          "title": "Extracted Text",
+          "type": "string",
+          "readOnly": true,
+          "minLength": 1
+        },
+        "uploaded_at": {
+          "title": "Uploaded At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "PersonalizedCurriculum": {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "topics": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/CurriculumTopic" },
+          "readOnly": true
+        },
+        "created_at": {
+          "title": "Created at",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updated_at": {
+          "title": "Updated at",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "QuestionAttempt": {
+      "required": ["question", "selected_option", "is_correct"],
+      "type": "object",
+      "properties": {
+        "question": { "title": "Question", "type": "integer" },
+        "selected_option": {
+          "title": "Selected Option",
+          "type": "string",
+          "maxLength": 5,
+          "minLength": 1
+        },
+        "is_correct": { "title": "Is Correct", "type": "boolean" }
+      }
+    },
+    "QuizAttempt": {
+      "required": ["quiz", "score", "question_attempts"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "quiz": { "title": "Quiz", "type": "integer" },
+        "score": {
+          "title": "Score",
+          "description": "Percentage score, e.g., 85.5",
+          "type": "number"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "question_attempts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/QuestionAttempt" }
+        }
+      }
+    },
+    "Question": {
+      "required": ["question_text", "options", "correct_option"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "question_text": {
+          "title": "Question Text",
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "title": "Options",
+          "description": "e.g., {'a': 'Option 1', 'b': 'Option 2'}",
+          "type": "object"
+        },
+        "correct_option": {
+          "title": "Correct Option",
+          "description": "The key of the correct option, e.g., 'a'",
+          "type": "string",
+          "maxLength": 5,
+          "minLength": 1
+        },
+        "explanation": { "title": "Explanation", "type": "string" }
+      }
+    },
+    "Quiz": {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "topic": { "title": "Topic", "type": "integer", "x-nullable": true },
+        "difficulty": {
+          "title": "Difficulty",
+          "type": "string",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "created_at": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Question" },
+          "readOnly": true
+        }
+      }
+    },
+    "StudyTask": {
+      "required": ["description", "estimated_minutes"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "description": {
+          "title": "Description",
+          "description": "e.g., 'Revise Photosynthesis summary'",
+          "type": "string",
+          "minLength": 1
+        },
+        "estimated_minutes": {
+          "title": "Estimated Minutes",
+          "type": "integer",
+          "maximum": 2147483647,
+          "minimum": 0
+        },
+        "completed": { "title": "Completed", "type": "boolean" },
+        "created_at": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "topic": { "title": "Topic", "type": "integer", "x-nullable": true }
+      }
+    },
+    "Summary": {
+      "required": ["content"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "content": { "title": "Content", "type": "string", "minLength": 1 },
+        "created_at": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "topic": { "title": "Topic", "type": "integer", "x-nullable": true },
+        "material": {
+          "title": "Material",
+          "type": "integer",
+          "x-nullable": true
+        }
+      }
+    },
+    "TokenObtainPair": {
+      "required": ["email", "password"],
+      "type": "object",
+      "properties": {
+        "email": { "title": "Email", "type": "string", "minLength": 1 },
+        "password": { "title": "Password", "type": "string", "minLength": 1 }
+      }
+    },
+    "TokenRefresh": {
+      "required": ["refresh"],
+      "type": "object",
+      "properties": {
+        "refresh": { "title": "Refresh", "type": "string", "minLength": 1 },
+        "access": {
+          "title": "Access",
+          "type": "string",
+          "readOnly": true,
+          "minLength": 1
+        }
+      }
+    },
+    "UserProgress": {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "topic": { "$ref": "#/definitions/CurriculumTopic" },
+        "mastery_score": {
+          "title": "Mastery Score",
+          "description": "A score from 0.0 to 1.0 indicating topic mastery.",
+          "type": "number"
+        },
+        "last_accessed": {
+          "title": "Last Accessed",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "User": {
+      "required": ["email"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "email": {
+          "title": "Email address",
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "minLength": 1
+        },
+        "first_name": {
+          "title": "First name",
+          "type": "string",
+          "maxLength": 150
+        },
+        "last_name": {
+          "title": "Last name",
+          "type": "string",
+          "maxLength": 150
+        },
+        "grade": { "title": "Grade", "type": "string", "maxLength": 10 },
+        "subjects": { "title": "Subjects", "type": "object" },
+        "profile_picture": {
+          "title": "Profile picture",
+          "type": "string",
+          "readOnly": true,
+          "x-nullable": true,
+          "format": "uri"
+        }
+      }
+    }
+  }
+}
