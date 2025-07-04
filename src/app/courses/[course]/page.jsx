@@ -17,6 +17,7 @@ import {
   Sparkles,
   Download,
   CheckCircle,
+  Plus,
 } from "lucide-react";
 
 export default function CourseDetails({ params }) {
@@ -326,7 +327,16 @@ export default function CourseDetails({ params }) {
             <ContentRenderer
               type="quiz"
               generating={generating.quiz}
-              onGenerate={() => generateContent("quiz", learningMaterials[0]?.id)}
+              onGenerate={() => {
+                // Build URL parameters for quiz creation
+                const params = new URLSearchParams();
+                if (topic?.topic) params.set('topic', topic.topic);
+                if (topic?.subject) params.set('subject', topic.subject);
+                if (topic?.grade) params.set('grade', topic.grade);
+                if (learningMaterials[0]?.id) params.set('material', learningMaterials[0].id);
+                
+                router.push(`/quizzes/create?${params.toString()}`);
+              }}
               content={quizzes}
               topic={topic}
               router={router}
@@ -385,9 +395,9 @@ const ContentRenderer = ({
     quiz: {
       title: "Quiz",
       icon: FileQuestion,
-      generationInProgress: "Generating Quiz...",
-      generateButtonText: "Generate Quiz",
-      emptyState: "No quizzes generated for this topic yet.",
+      generationInProgress: "Creating Quiz...",
+      generateButtonText: "Create Quiz",
+      emptyState: "No quizzes created for this topic yet.",
     },
     flashcards: {
       title: "Flashcards",
@@ -430,7 +440,11 @@ const ContentRenderer = ({
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4" />
+              {type === 'quiz' ? (
+                <Plus className="h-4 w-4" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
               {config.generateButtonText}
             </>
           )}

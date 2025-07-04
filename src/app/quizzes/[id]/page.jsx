@@ -181,6 +181,11 @@ export default function QuizDetails({ params }) {
       console.log("Processed questions:", processedQuestions);
       setQuestions(processedQuestions);
       
+      // Debug quiz data structure
+      if (process.env.NODE_ENV === 'development') {
+        apiService.debugQuizData(quizId, processedQuestions);
+      }
+      
       // Set timer if quiz has time limit (default 30 minutes)
       const timeLimit = quizResponse.data.time_limit || 30 * 60; // 30 minutes in seconds
       setTimeRemaining(timeLimit);
@@ -250,9 +255,11 @@ export default function QuizDetails({ params }) {
   };
 
   const handleAnswerSelect = (questionId, selectedOption, optionKey) => {
+    console.log("Answer selected:", { questionId, selectedOption, optionKey });
+    // Always store the option key as the primary answer - this is what the backend expects
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: { text: selectedOption, key: optionKey },
+      [questionId]: optionKey, // Store just the key (e.g., "a", "b", "c", "d")
     }));
   };
 
@@ -302,276 +309,68 @@ export default function QuizDetails({ params }) {
       console.log("Questions IDs:", questions.map(q => q.id));
       console.log("Answer keys:", Object.keys(answers));
       
-      // Validate that all answers have valid question IDs
-      const validQuestionIds = new Set(questions.map(q => q.id.toString()));
-      const invalidAnswers = Object.keys(answers).filter(qId => !validQuestionIds.has(qId));
-      
-      if (invalidAnswers.length > 0) {
-        console.warn("Found answers for invalid question IDs:", invalidAnswers);
-      }
-      
-      // Format answers for submission - backend expects object mapping question IDs to option keys
+      // Format answers according to API documentation: {"15": "a", "16": "b"}
+      // answers should contain question_id -> option_key mapping
       const formattedAnswers = {};
       
       Object.keys(answers).forEach((questionId) => {
-        const answerData = answers[questionId];
-        console.log(`Processing answer for question ${questionId}:`, answerData);
+        const answerKey = answers[questionId];
+        console.log(`Processing answer for question ${questionId}:`, answerKey);
         
-        // Validate the question exists
-        const question = questions.find(q => q.id === parseInt(questionId));
-        if (!question) {
-          console.warn(`Question ${questionId} not found in questions array`);
-          return;
-        }
-        
-        let selectedOptionKey;
-        
-        if (answerData && typeof answerData === 'object' && answerData.key) {
-          // New format with key already extracted
-          selectedOptionKey = answerData.key;
-        } else if (typeof answerData === 'string') {
-          // Old format - try to find the key for this text
-          if (question && question.options && typeof question.options === 'object' && !Array.isArray(question.options)) {
-            // Find the key that maps to this answer text
-            const optionKey = Object.entries(question.options).find(([key, value]) => value === answerData)?.[0];
-            selectedOptionKey = optionKey || answerData;
-          } else if (question?.optionMapping) {
-            // Legacy option mapping support
-            const optionKey = Object.keys(question.optionMapping).find(
-              key => question.optionMapping[key] === answerData
-            );
-            selectedOptionKey = optionKey || answerData;
-          } else {
-            selectedOptionKey = answerData;
-          }
+        // answers[questionId] should now just be the option key (e.g., "a", "b", "c", "d")
+        if (answerKey && typeof answerKey === 'string' && answerKey.trim() !== '') {
+          formattedAnswers[questionId] = answerKey;
         } else {
-          console.warn(`Invalid answer format for question ${questionId}:`, answerData);
-          return;
-        }
-        
-        if (selectedOptionKey && selectedOptionKey.trim() !== '') {
-          // Use the format expected by backend: question_id_X: option_key
-          formattedAnswers[`question_id_${questionId}`] = selectedOptionKey;
+          console.warn(`Invalid answer format for question ${questionId}:`, answerKey);
         }
       });
 
       if (Object.keys(formattedAnswers).length === 0) {
         toast({
-          title: "Invalid Answers",
-          description: "Please check your answers and try again.",
+          title: "No Answers",
+          description: "Please answer at least one question before submitting.",
           variant: "destructive",
         });
         return;
       }
 
-      // Primary submission format - backend expects answers as object mapping question IDs to option keys
+      // Submit using the exact format from documentation
       const submissionData = {
-        answers: formattedAnswers,
-        time_taken: timeElapsed,
+        answers: formattedAnswers
       };
 
-      console.log("Submitting quiz answers - DEBUG INFO:");
-      console.log("- Quiz ID:", quizId);
-      console.log("- Total Questions:", questions.length);
-      console.log("- User Answers:", answers);
-      console.log("- Formatted Answers:", formattedAnswers);
-      console.log("- Total Answers Provided:", Object.keys(formattedAnswers).length);
-      console.log("- Time Elapsed:", timeElapsed);
-      console.log("- Questions Structure:", questions.map(q => ({
-        id: q.id,
-        text: q.question_text?.substring(0, 50) + "...",
-        options: q.options,
-        correct_option: q.correct_option
-      })));
+      console.log("Submitting quiz answers:", {
+        quizId,
+        submissionData,
+        totalQuestions: questions.length,
+        answersProvided: Object.keys(formattedAnswers).length
+      });
 
-      // Try the primary submit_answers endpoint with our formatted data
       let response;
       try {
-        console.log("Attempting primary submission with data:", submissionData);
-        response = await apiService.submitQuizAnswers(quizId, submissionData);
-        console.log("Primary submission successful:", response.data);
+        response = await apiService.submitQuizAnswers(quizId, submissionData, questions);
+        console.log("Quiz submission successful:", response.data);
       } catch (submitError) {
-        console.log("Primary submission failed:");
-        console.log("- Status:", submitError.response?.status);
-        console.log("- Status Text:", submitError.response?.statusText);
-        console.log("- Error Data:", submitError.response?.data);
-        console.log("- Request Data:", submissionData);
-        console.log("Trying alternative formats...");
-        
-        // Build fallback formats in case the primary doesn't work
-        const questionIdToAnswer = {};
-        Object.keys(answers).forEach((questionId) => {
-          const answerData = answers[questionId];
-          if (answerData?.key) {
-            questionIdToAnswer[questionId] = answerData.key;
-          }
-        });
-        
-        // Try different data formats as fallbacks
-        try {
-          // Format 1: Simple question_id: option_key mapping (without question_id_ prefix)
-          const altFormat1 = {
-            answers: questionIdToAnswer,
-            time_taken: timeElapsed
-          };
-          console.log("Trying format 1 (simple mapping):", altFormat1);
-          response = await apiService.submitQuizAnswers(quizId, altFormat1);
-          console.log("Format 1 successful:", response.data);
-        } catch (e1) {
-          console.log("Format 1 failed:");
-          console.log("- Status:", e1.response?.status);
-          console.log("- Error Data:", e1.response?.data);
-          
-          try {
-            // Format 2: Array format with objects
-            const altFormat2 = {
-              answers: Object.keys(questionIdToAnswer).map(qId => ({
-                question_id: parseInt(qId),
-                selected_option: questionIdToAnswer[qId]
-              })),
-              time_taken: timeElapsed
-            };
-            console.log("Trying format 2 (array):", altFormat2);
-            response = await apiService.submitQuizAnswers(quizId, altFormat2);
-            console.log("Format 2 successful:", response.data);
-          } catch (e2) {
-            console.log("Format 2 failed:");
-            console.log("- Status:", e2.response?.status);
-            console.log("- Error Data:", e2.response?.data);
-            
-            try {
-              // Format 3: Just answers without time_taken
-              const altFormat3 = {
-                answers: formattedAnswers
-              };
-              console.log("Trying format 3 (no time):", altFormat3);
-              response = await apiService.submitQuizAnswers(quizId, altFormat3);
-              console.log("Format 3 successful:", response.data);
-            } catch (e3) {
-              console.log("Format 3 failed:");
-              console.log("- Status:", e3.response?.status);
-              console.log("- Error Data:", e3.response?.data);
-              
-              try {
-                // Format 4: Quiz attempt approach
-                const quizAttemptData = {
-                  quiz: parseInt(quizId),
-                  score: 0, // Will be calculated by backend
-                  question_attempts: Object.keys(questionIdToAnswer).map(qId => ({
-                    question: parseInt(qId),
-                    selected_option: questionIdToAnswer[qId],
-                    is_correct: false // Will be calculated by backend
-                  }))
-                };
-                console.log("Trying quiz attempt format:", quizAttemptData);
-                response = await apiService.createQuizAttempt(quizAttemptData);
-                console.log("Quiz attempt successful:", response.data);
-              } catch (e4) {
-                console.log("Quiz attempt failed:");
-                console.log("- Status:", e4.response?.status);
-                console.log("- Error Data:", e4.response?.data);
-                
-                // Format 5: Try with just the answer values (strings)
-                try {
-                  const altFormat5 = {};
-                  Object.keys(answers).forEach((questionId) => {
-                    const answerData = answers[questionId];
-                    if (answerData?.text) {
-                      altFormat5[questionId] = answerData.text;
-                    }
-                  });
-                  console.log("Trying format 5 (answer text):", { answers: altFormat5 });
-                  response = await apiService.submitQuizAnswers(quizId, { answers: altFormat5 });
-                  console.log("Format 5 successful:", response.data);
-                } catch (e5) {
-                  console.log("Format 5 failed:");
-                  console.log("- Status:", e5.response?.status);
-                  console.log("- Error Data:", e5.response?.data);
-                  
-                  // All formats failed, re-throw the original error
-                  console.log("All submission formats failed, throwing original error");
-                  throw submitError;
-                }
-              }
-            }
-          }
-        }
+        console.error("Quiz submission failed:", submitError);
+        throw submitError;
       }
 
       console.log("Quiz submission response:", response.data);
 
-      // Handle different response formats and extract attempt ID
-      let results;
-      let attemptId;
+      // Handle response according to API documentation
+      // Expected format: { "attempt_id": 25, "score": 85.0, "total_questions": 10, "correct_answers": 8, "results": [...] }
+      const results = {
+        score: response.data.score || 0,
+        correct_answers: response.data.correct_answers || 0,
+        total_questions: response.data.total_questions || questions.length,
+        time_taken: timeElapsed,
+        question_results: response.data.results || []
+      };
       
-      if (response.data.score !== undefined) {
-        // Direct quiz results
-        results = response.data;
-        attemptId = response.data.attempt_id || response.data.id;
-      } else if (response.data.results) {
-        // Results nested in response
-        results = response.data.results;
-        attemptId = response.data.attempt_id || response.data.id;
-      } else if (response.data.question_attempts) {
-        // Quiz attempt format - convert to expected format
-        const correct = response.data.question_attempts.filter(qa => qa.is_correct).length;
-        const total = response.data.question_attempts.length;
-        results = {
-          score: Math.round((correct / total) * 100),
-          correct_answers: correct,
-          total_questions: total,
-          time_taken: timeElapsed,
-          question_results: response.data.question_attempts.map(qa => ({
-            question_id: qa.question,
-            is_correct: qa.is_correct,
-            selected_option: qa.selected_option
-          }))
-        };
-        attemptId = response.data.id;
-      } else {
-        // Fallback - calculate results ourselves
-        console.log("No structured response, calculating results from user answers");
-        
-        // Build answer data for calculation
-        const answerData = Object.keys(answers).map(questionId => ({
-          question_id: parseInt(questionId),
-          selected_option: answers[questionId]?.key || answers[questionId]
-        }));
-        
-        const calculatedResults = answerData.map(answer => {
-          const question = questions.find(q => q.id === answer.question_id);
-          const correctKey = question?.correct_option || question?.correct_answer;
-          const isCorrect = answer.selected_option === correctKey;
-          
-          console.log('Calculating result for question:', {
-            questionId: answer.question_id,
-            selectedOption: answer.selected_option,
-            correctKey,
-            isCorrect
-          });
-          
-          return {
-            question_id: answer.question_id,
-            is_correct: isCorrect,
-            selected_option: answer.selected_option,
-            correct_option: correctKey
-          };
-        });
-        
-        const correctCount = calculatedResults.filter(r => r.is_correct).length;
-        
-        results = {
-          score: Math.round((correctCount / questions.length) * 100),
-          correct_answers: correctCount,
-          total_questions: questions.length,
-          time_taken: timeElapsed,
-          question_results: calculatedResults
-        };
-        attemptId = response.data.attempt_id || response.data.id;
-      }
+      const attemptId = response.data.attempt_id;
 
-      // Store the attempt ID for future reference
-      if (attemptId) {
+      // Store the attempt ID for future reference (skip if it's a mock response)
+      if (attemptId && !response.data._mock_response) {
         setQuizAttemptId(attemptId);
         console.log("Stored quiz attempt ID:", attemptId);
       }
@@ -580,10 +379,20 @@ export default function QuizDetails({ params }) {
       setQuizCompleted(true);
       setShowReview(true);
 
-      toast({
-        title: "Quiz Completed!",
-        description: `You scored ${results.score}%`,
-      });
+      // Show appropriate toast message based on whether this is a mock response
+      if (response.data._mock_response) {
+        toast({
+          title: "Quiz Completed!",
+          description: `You scored ${results.score}% (Note: Results not saved due to server issue)`,
+          variant: "destructive",
+        });
+        console.warn("Quiz completed with mock response due to server error:", response.data._error);
+      } else {
+        toast({
+          title: "Quiz Completed!",
+          description: `You scored ${results.score}%`,
+        });
+      }
     } catch (error) {
       console.error("Error submitting quiz:", error);
       console.error("Error details:", {
@@ -619,61 +428,34 @@ export default function QuizDetails({ params }) {
     setQuizStarted(false);
     setQuizCompleted(false);
     setQuizResults(null);
-    setTimeElapsed(0);
-    setCurrentQuestionIndex(0);
     setAnswers({});
+    setCurrentQuestionIndex(0);
+    setTimeElapsed(0);
     setShowReview(false);
     setQuizAttemptId(null);
   };
 
   const loadQuizAttemptForReview = async (attemptId) => {
     try {
-      console.log("Loading quiz attempt for review:", attemptId);
       const attemptResults = await fetchQuizAttemptData(attemptId);
-      
-      // Reconstruct user answers from the attempt data
-      const reconstructedAnswers = {};
-      if (attemptResults.question_results) {
-        attemptResults.question_results.forEach(result => {
-          reconstructedAnswers[result.question_id] = {
-            key: result.selected_option,
-            text: getOptionTextFromKey(result.question_id, result.selected_option)
-          };
-        });
-      }
-      
-      setAnswers(reconstructedAnswers);
       setQuizResults(attemptResults);
       setQuizCompleted(true);
       setShowReview(true);
       setQuizAttemptId(attemptId);
-      
-      console.log("Loaded quiz attempt data:", {
-        results: attemptResults,
-        answers: reconstructedAnswers
-      });
     } catch (error) {
-      console.error("Error loading quiz attempt for review:", error);
+      console.error("Failed to load quiz attempt for review:", error);
       toast({
         title: "Error",
-        description: "Failed to load quiz attempt details.",
+        description: "Failed to load quiz attempt for review.",
         variant: "destructive",
       });
     }
   };
 
-  const getOptionTextFromKey = (questionId, optionKey) => {
-    const question = questions.find(q => q.id === questionId);
-    if (question?.options && typeof question.options === 'object' && question.options[optionKey]) {
-      return question.options[optionKey];
-    }
-    return optionKey; // Fallback to just showing the key
-  };
-
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getAnsweredQuestionsCount = () => {
@@ -684,6 +466,14 @@ export default function QuizDetails({ params }) {
     if (score >= 90) return "text-green-600";
     if (score >= 70) return "text-yellow-600";
     return "text-red-600";
+  };
+
+  const getOptionTextFromKey = (questionId, optionKey) => {
+    const question = questions.find(q => q.id === parseInt(questionId));
+    if (question && question.options && question.options[optionKey]) {
+      return question.options[optionKey];
+    }
+    return optionKey; // fallback to showing the key itself
   };
 
   // Get current question safely
@@ -705,32 +495,22 @@ export default function QuizDetails({ params }) {
     }
     
     // If no backend result, determine correctness ourselves
-    const userAnswerData = answers[question.id];
-    if (!userAnswerData) {
+    const userAnswer = answers[question.id];
+    if (!userAnswer) {
       console.log(`Question ${question.id}: No user answer found`);
       return false;
     }
     
-    // Get the selected option key
-    let selectedKey;
-    if (typeof userAnswerData === 'object' && userAnswerData.key) {
-      selectedKey = userAnswerData.key;
-    } else if (typeof userAnswerData === 'string') {
-      // Try to find the key for this text
-      if (question.options && typeof question.options === 'object') {
-        selectedKey = Object.entries(question.options).find(([key, value]) => value === userAnswerData)?.[0];
-      }
-    }
-    
-    // Compare with correct option
+    // Get the correct option key
     const correctKey = question.correct_option || question.correct_answer;
-    const isCorrect = selectedKey === correctKey;
+    
+    // Direct comparison - userAnswer should now be the option key
+    const isCorrect = userAnswer === correctKey;
     
     console.log(`Question ${question.id} correctness calculation:`, {
-      selectedKey,
+      userAnswer,
       correctKey,
-      isCorrect,
-      userAnswerData
+      isCorrect
     });
     
     return isCorrect;
@@ -825,9 +605,9 @@ export default function QuizDetails({ params }) {
   };
 
   const getUserAnswerText = (question) => {
-    const userAnswerData = answers[question.id];
+    const userAnswer = answers[question.id];
     
-    if (!userAnswerData) {
+    if (!userAnswer) {
       // Check if we have the answer in quiz results
       if (quizResults?.question_results) {
         const result = quizResults.question_results.find(r => r.question_id === question.id);
@@ -839,13 +619,22 @@ export default function QuizDetails({ params }) {
       return 'No answer selected';
     }
     
-    if (typeof userAnswerData === 'object' && userAnswerData.text) {
-      return userAnswerData.text;
-    } else if (typeof userAnswerData === 'string') {
-      return userAnswerData;
-    } else if (typeof userAnswerData === 'object' && userAnswerData.key) {
-      // We have just the key, need to get the text
-      return getOptionTextFromKey(question.id, userAnswerData.key);
+    // userAnswer is now just the option key (e.g., "a", "b", "c", "d")
+    if (typeof userAnswer === 'string') {
+      // For multiple choice questions, get the text for this key
+      if (question.options && typeof question.options === 'object') {
+        const optionText = question.options[userAnswer];
+        if (optionText) {
+          return `${userAnswer.toUpperCase()}. ${optionText}`;
+        }
+      }
+      
+      // For true/false questions, convert the key to display text
+      if (userAnswer === 'true') return 'True';
+      if (userAnswer === 'false') return 'False';
+      
+      // For short answer or other question types, the answer is the text itself
+      return userAnswer;
     }
     
     return 'Invalid answer format';
@@ -943,11 +732,40 @@ export default function QuizDetails({ params }) {
               No Questions Available
             </h2>
             <p className="text-gray-600 mb-6">
-              This quiz doesn't have any questions yet. Please try again later or contact support.
+              This quiz doesn't have any questions yet. This might happen if the quiz generation failed or is still in progress.
             </p>
-            <Button onClick={() => router.push("/quizzes")}>
-              Back to Quizzes
-            </Button>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button 
+                onClick={() => router.push("/quizzes")}
+                variant="outline"
+              >
+                Back to Quizzes
+              </Button>
+              
+              {quiz?.topic && (
+                <Button 
+                  onClick={() => router.push(`/quizzes/create?topic=${quiz.topic.id}&subject=${encodeURIComponent(quiz.topic.subject)}&grade=${quiz.topic.grade}`)}
+                >
+                  Create Similar Quiz
+                </Button>
+              )}
+              
+              <Button 
+                onClick={() => router.push('/quizzes/create')}
+              >
+                Create New Quiz
+              </Button>
+            </div>
+            
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-6 p-4 bg-gray-50 border rounded text-xs text-left">
+                <strong>Debug Info:</strong><br />
+                Quiz ID: {quizId}<br />
+                Quiz Data: {JSON.stringify(quiz, null, 2)}<br />
+                Questions Response: {JSON.stringify(questions, null, 2)}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1490,12 +1308,96 @@ export default function QuizDetails({ params }) {
                 </div>
 
                 <div className="space-y-3">
-                  {currentQuestion.options && typeof currentQuestion.options === 'object' && !Array.isArray(currentQuestion.options) ? (
-                    Object.entries(currentQuestion.options).map(([key, option]) => (
+                  {/* Multiple Choice Questions */}
+                  {(!currentQuestion.question_type || currentQuestion.question_type === 'multiple_choice') && (
+                    currentQuestion.options && typeof currentQuestion.options === 'object' && !Array.isArray(currentQuestion.options) ? (
+                      Object.entries(currentQuestion.options).map(([key, option]) => (
+                        <label
+                          key={key}
+                          className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
+                            answers[currentQuestion.id] === key
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion.id}`}
+                            value={key}
+                            checked={answers[currentQuestion.id] === key}
+                            onChange={() => handleAnswerSelect(currentQuestion.id, option, key)}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-4 h-4 rounded-full border-2 mr-3 flex-shrink-0 ${
+                              answers[currentQuestion.id] === key
+                                ? "border-blue-500 bg-blue-500"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {answers[currentQuestion.id] === key && (
+                              <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                            )}
+                          </div>
+                          <span className="font-medium text-blue-600 mr-3">
+                            {key.toUpperCase()}.
+                          </span>
+                          <span className="text-gray-800">{option}</span>
+                        </label>
+                      ))
+                    ) : Array.isArray(currentQuestion.options) && currentQuestion.options.length > 0 ? (
+                      /* Fallback for array format */
+                      currentQuestion.options.map((option, index) => {
+                        const optionKey = String.fromCharCode(97 + index); // a, b, c, d
+                        return (
+                          <label
+                            key={index}
+                            className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
+                              answers[currentQuestion.id] === optionKey
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${currentQuestion.id}`}
+                              value={optionKey}
+                              checked={answers[currentQuestion.id] === optionKey}
+                              onChange={() => handleAnswerSelect(currentQuestion.id, option, optionKey)}
+                              className="sr-only"
+                            />
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 mr-3 flex-shrink-0 ${
+                                answers[currentQuestion.id] === optionKey
+                                  ? "border-blue-500 bg-blue-500"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              {answers[currentQuestion.id] === optionKey && (
+                                <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                              )}
+                            </div>
+                            <span className="font-medium text-blue-600 mr-3">
+                              {String.fromCharCode(65 + index)}.
+                            </span>
+                            <span className="text-gray-800">{option}</span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                        <p className="text-gray-600">No options available for this question.</p>
+                      </div>
+                    )
+                  )}
+                  
+                  {/* True/False Questions */}
+                  {currentQuestion.question_type === 'true_false' && (
+                    <div className="space-y-3">
                       <label
-                        key={key}
                         className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
-                          answers[currentQuestion.id]?.key === key
+                          answers[currentQuestion.id] === 'true'
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200"
                         }`}
@@ -1503,38 +1405,29 @@ export default function QuizDetails({ params }) {
                         <input
                           type="radio"
                           name={`question-${currentQuestion.id}`}
-                          value={key}
-                          checked={answers[currentQuestion.id]?.key === key}
-                          onChange={() => setAnswers(prev => ({
-                            ...prev,
-                            [currentQuestion.id]: { text: option, key: key }
-                          }))}
+                          value="true"
+                          checked={answers[currentQuestion.id] === 'true'}
+                          onChange={() => handleAnswerSelect(currentQuestion.id, 'True', 'true')}
                           className="sr-only"
                         />
                         <div
                           className={`w-4 h-4 rounded-full border-2 mr-3 flex-shrink-0 ${
-                            answers[currentQuestion.id]?.key === key
+                            answers[currentQuestion.id] === 'true'
                               ? "border-blue-500 bg-blue-500"
                               : "border-gray-300"
                           }`}
                         >
-                          {answers[currentQuestion.id]?.key === key && (
+                          {answers[currentQuestion.id] === 'true' && (
                             <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
                           )}
                         </div>
-                        <span className="font-medium text-blue-600 mr-3">
-                          {key.toUpperCase()}.
-                        </span>
-                        <span className="text-gray-800">{option}</span>
+                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                        <span className="text-gray-800 font-medium">True</span>
                       </label>
-                    ))
-                  ) : Array.isArray(currentQuestion.options) && currentQuestion.options.length > 0 ? (
-                    /* Fallback for array format */
-                    currentQuestion.options.map((option, index) => (
+                      
                       <label
-                        key={index}
                         className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${
-                          answers[currentQuestion.id]?.text === option
+                          answers[currentQuestion.id] === 'false'
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200"
                         }`}
@@ -1542,37 +1435,43 @@ export default function QuizDetails({ params }) {
                         <input
                           type="radio"
                           name={`question-${currentQuestion.id}`}
-                          value={option}
-                          checked={answers[currentQuestion.id]?.text === option}
-                          onChange={() => setAnswers(prev => ({
-                            ...prev,
-                            [currentQuestion.id]: { text: option, key: String.fromCharCode(97 + index) } // a, b, c, d
-                          }))}
+                          value="false"
+                          checked={answers[currentQuestion.id] === 'false'}
+                          onChange={() => handleAnswerSelect(currentQuestion.id, 'False', 'false')}
                           className="sr-only"
                         />
                         <div
                           className={`w-4 h-4 rounded-full border-2 mr-3 flex-shrink-0 ${
-                            answers[currentQuestion.id]?.text === option
+                            answers[currentQuestion.id] === 'false'
                               ? "border-blue-500 bg-blue-500"
                               : "border-gray-300"
                           }`}
                         >
-                          {answers[currentQuestion.id]?.text === option && (
+                          {answers[currentQuestion.id] === 'false' && (
                             <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
                           )}
                         </div>
-                        <span className="font-medium text-blue-600 mr-3">
-                          {String.fromCharCode(65 + index)}.
-                        </span>
-                        <span className="text-gray-800">{option}</span>
+                        <XCircle className="h-5 w-5 text-red-600 mr-3" />
+                        <span className="text-gray-800 font-medium">False</span>
                       </label>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                      <p className="text-gray-600">No options available for this question.</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        Question data: {JSON.stringify(currentQuestion.options)}
+                    </div>
+                  )}
+                  
+                  {/* Short Answer Questions */}
+                  {currentQuestion.question_type === 'short_answer' && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Your Answer:
+                      </label>
+                      <textarea
+                        value={answers[currentQuestion.id] || ''}
+                        onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value, e.target.value)}
+                        placeholder="Type your answer here..."
+                        rows={4}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Provide a clear and concise answer to the question above.
                       </p>
                     </div>
                   )}
