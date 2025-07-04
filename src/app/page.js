@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuth } from "@/app/services/auth-context";
+import { useAuth } from "./services/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuth();

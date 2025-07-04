@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "@/app/services/auth-context";
+import { useAuth } from "../app/services/auth-context";
 import { usePathname } from "next/navigation";
-import { Sidebar } from "@/components/ui/sidebar";
+import { Sidebar } from "./ui/sidebar";
 
 const publicRoutes = ["/login", "/register", "/"];
 

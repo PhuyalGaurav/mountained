@@ -158,43 +158,97 @@ export const authService = {
 
 // API endpoints
 export const apiService = {
+  // Analytics - New in v2
+  getAnalytics: () => api.get("/analytics/"),
+  createAnalytics: (data) => api.post("/analytics/", data),
+  getAnalyticsDashboard: () => api.get("/analytics/dashboard/"),
+  getAnalyticsSummaryStats: () => api.get("/analytics/summary_stats/"),
+  updateAnalytics: () => api.post("/analytics/update_analytics/"),
+  getAnalyticsById: (id) => api.get(`/analytics/${id}/`),
+  updateAnalyticsById: (id, data) => api.put(`/analytics/${id}/`, data),
+  deleteAnalyticsById: (id) => api.delete(`/analytics/${id}/`),
+
   // Curriculum Topics
   getCurriculumTopics: () => api.get("/curriculum-topics/"),
   getCurriculumTopic: (id) => api.get(`/curriculum-topics/${id}/`),
 
+  // Exported Quizzes - New in v2
+  getExportedQuizzes: () => api.get("/exported-quizzes/"),
+  createExportedQuiz: (data) => api.post("/exported-quizzes/", data),
+  getExportedQuiz: (id) => api.get(`/exported-quizzes/${id}/`),
+  updateExportedQuiz: (id, data) => api.put(`/exported-quizzes/${id}/`, data),
+  deleteExportedQuiz: (id) => api.delete(`/exported-quizzes/${id}/`),
+
   // Flashcards
   getFlashcards: () => api.get("/flashcards/"),
   createFlashcard: (data) => api.post("/flashcards/", data),
+  getFlashcard: (id) => api.get(`/flashcards/${id}/`),
   updateFlashcard: (id, data) => api.put(`/flashcards/${id}/`, data),
   deleteFlashcard: (id) => api.delete(`/flashcards/${id}/`),
+
+  // Learning Materials
+  getLearningMaterials: () => api.get("/learning-materials/"),
+  createLearningMaterial: (data) => api.post("/learning-materials/", data),
+  getLearningMaterial: (id) => api.get(`/learning-materials/${id}/`),
+  updateLearningMaterial: (id, data) =>
+    api.put(`/learning-materials/${id}/`, data),
+  deleteLearningMaterial: (id) => api.delete(`/learning-materials/${id}/`),
+
+  // Learning Materials Generation Methods - New in v2
+  generateFlashcards: (id, data) =>
+    api.post(`/learning-materials/${id}/generate_flashcards/`, data),
+  generateQuiz: (id, data) =>
+    api.post(`/learning-materials/${id}/generate_quiz/`, data),
+  generateStudyTasks: (id, data) =>
+    api.post(`/learning-materials/${id}/generate_study_tasks/`, data),
+  generateSummary: (id, data) =>
+    api.post(`/learning-materials/${id}/generate_summary/`, data),
+
+  // Personalized Curriculum
+  getPersonalizedCurriculum: () => api.get("/personalized-curriculum/"),
+  getPersonalizedCurriculumById: (id) =>
+    api.get(`/personalized-curriculum/${id}/`),
+
+  // Quiz Attempts
+  getQuizAttempts: () => api.get("/quiz-attempts/"),
+  createQuizAttempt: (data) => api.post("/quiz-attempts/", data),
+  getQuizAttempt: (id) => api.get(`/quiz-attempts/${id}/`),
+  updateQuizAttempt: (id, data) => api.put(`/quiz-attempts/${id}/`, data),
+  deleteQuizAttempt: (id) => api.delete(`/quiz-attempts/${id}/`),
 
   // Quizzes
   getQuizzes: () => api.get("/quizzes/"),
   createQuiz: (data) => api.post("/quizzes/", data),
   getQuiz: (id) => api.get(`/quizzes/${id}/`),
+  updateQuiz: (id, data) => api.put(`/quizzes/${id}/`, data),
+  deleteQuiz: (id) => api.delete(`/quizzes/${id}/`),
 
-  // Quiz Attempts
-  getQuizAttempts: () => api.get("/quiz-attempts/"),
-  createQuizAttempt: (data) => api.post("/quiz-attempts/", data),
-
-  // Learning Materials
-  getLearningMaterials: () => api.get("/learning-materials/"),
-  createLearningMaterial: (data) => api.post("/learning-materials/", data),
+  // Quiz Generation Methods - New in v2
+  generateQuizQuestions: (id, data) =>
+    api.post(`/quizzes/${id}/generate_questions/`, data),
+  getQuizQuestions: (id) => api.get(`/quizzes/${id}/questions/`),
 
   // Study Tasks
   getStudyTasks: () => api.get("/study-tasks/"),
   createStudyTask: (data) => api.post("/study-tasks/", data),
+  getStudyTask: (id) => api.get(`/study-tasks/${id}/`),
   updateStudyTask: (id, data) => api.put(`/study-tasks/${id}/`, data),
+  deleteStudyTask: (id) => api.delete(`/study-tasks/${id}/`),
 
   // Summaries
   getSummaries: () => api.get("/summaries/"),
   createSummary: (data) => api.post("/summaries/", data),
+  getSummary: (id) => api.get(`/summaries/${id}/`),
+  updateSummary: (id, data) => api.put(`/summaries/${id}/`, data),
+  deleteSummary: (id) => api.delete(`/summaries/${id}/`),
 
   // User Progress
   getUserProgress: () => api.get("/user-progress/"),
+  getUserProgressById: (id) => api.get(`/user-progress/${id}/`),
 
-  // Personalized Curriculum
-  getPersonalizedCurriculum: () => api.get("/personalized-curriculum/"),
+  // Users - New endpoints in v2
+  getUsers: () => api.get("/users/"),
+  getUser: (id) => api.get(`/users/${id}/`),
 };
 
 export default api;

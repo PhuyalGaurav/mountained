@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "./api";
 
-const AuthContext = createContext({
+export const AuthContext = createContext({
   isAuthenticated: false,
   isLoading: true,
   user: null,

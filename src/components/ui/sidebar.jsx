@@ -4,7 +4,15 @@ import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/services/auth-context";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, FileQuestion, User, LogOut, Menu } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  FileQuestion,
+  User,
+  LogOut,
+  Menu,
+  BarChart3,
+} from "lucide-react";
 import Image from "next/image";
 
 const sideBarItems = [
@@ -22,6 +30,11 @@ const sideBarItems = [
     name: "Quizzes",
     href: "/quizzes",
     icon: FileQuestion,
+  },
+  {
+    name: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
   },
   {
     name: "Profile",
