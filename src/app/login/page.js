@@ -133,18 +133,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <a
-                href="/register"
-                className="font-medium text-primary hover:text-primary/90 transition-colors"
-              >
-                Sign up
-              </a>
-            </p>
-          </div>
         </div>
 
         <div className="text-center">

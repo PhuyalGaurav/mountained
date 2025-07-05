@@ -67,27 +67,75 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
   const [masteryScore, setMasteryScore] = React.useState(0);
+  const [lastUpdated, setLastUpdated] = React.useState(Date.now());
 
   // Fetch mastery score from userprogresslist API
-  React.useEffect(() => {
-    const fetchMasteryScore = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const userProgressList = await apiService.getUserProgress_list();
-          if (userProgressList && userProgressList.length > 0) {
-            // Get the latest or average mastery score
-            const latestProgress = userProgressList[0];
-            setMasteryScore(latestProgress.mastery_score || 0);
-          }
-        } catch (error) {
-          console.error("Failed to fetch mastery score:", error);
+  const fetchMasteryScore = React.useCallback(async () => {
+    if (isAuthenticated && user) {
+      try {
+        const userProgressResponse = await apiService.getUserProgress();
+        const userProgressList = userProgressResponse.data;
+        if (userProgressList && userProgressList.length > 0) {
+          // Calculate average mastery score from all progress entries
+          const totalScore = userProgressList.reduce((sum, progress) => 
+            sum + (progress.mastery_score || 0), 0);
+          const averageScore = Math.round((totalScore / userProgressList.length) * 100);
+          setMasteryScore(averageScore);
+        } else {
+          // No progress data available, show 0
           setMasteryScore(0);
         }
+        setLastUpdated(Date.now());
+      } catch (error) {
+        console.error("Failed to fetch mastery score:", error);
+        // If API fails, don't show error to user, just show 0
+        setMasteryScore(0);
+      }
+    }
+  }, [isAuthenticated, user]);
+
+  // Initial fetch when component mounts or user changes
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchMasteryScore();
+    }
+  }, [isAuthenticated, user, fetchMasteryScore]);
+
+  // Periodic refresh every 30 seconds to keep the score updated
+  React.useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const interval = setInterval(() => {
+      fetchMasteryScore();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user, fetchMasteryScore]);
+
+  // Listen for focus events to refresh when user comes back to the tab
+  React.useEffect(() => {
+    const handleFocus = () => {
+      // Only refresh if it's been more than 10 seconds since last update
+      if (Date.now() - lastUpdated > 10000) {
+        fetchMasteryScore();
       }
     };
 
-    fetchMasteryScore();
-  }, [isAuthenticated, user]);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchMasteryScore, lastUpdated]);
+
+  // Expose refresh function globally for other components to trigger updates
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.refreshMasteryScore = fetchMasteryScore;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.refreshMasteryScore;
+      }
+    };
+  }, [fetchMasteryScore]);
 
   // Don't show sidebar on login page or if not authenticated
   if (!isAuthenticated || pathname === "/login") {
@@ -186,11 +234,16 @@ export function Sidebar() {
                     {user?.email}
                   </p>
                 </div>
-                <span className="text-white bg-[#ffd200] w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shadow-lg transform hover:scale-105 transition-transform duration-200 relative">
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#ffd2200] to-[#fff176] rounded-full"></div>
-                  <div className="relative z-10 font-bold text-[#2c1810]">
+                <span 
+                  className="text-white bg-[#ffd200] w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shadow-lg transform hover:scale-105 transition-all duration-200 relative cursor-pointer"
+                  onClick={fetchMasteryScore}
+                  title={`Mastery Score: ${masteryScore}% (Click to refresh)`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#ffd200] to-[#fff176] rounded-full"></div>
+                  <div className="relative z-10 font-bold text-[#2c1810] transition-all duration-200">
                     {masteryScore}
                   </div>
+                  <div className="absolute inset-0 rounded-full animate-pulse bg-[#ffd200] opacity-30"></div>
                 </span>
               </div>
             </div>

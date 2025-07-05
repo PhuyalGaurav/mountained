@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { QuizTimer, QuestionCard } from "@/components/ui/quiz-progress";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { refreshForScenario, REFRESH_SCENARIOS } from "@/lib/masteryScore";
 import {
   ArrowLeft,
   ArrowRight,
@@ -451,18 +452,20 @@ export default function QuizDetails({ params }) {
         };
         
         console.log("🔒 Setting recalculated quiz results immediately:", results);
-        
-        // Set all quiz completion states atomically to prevent race conditions
-        setQuizResults(results);
-        setQuizCompleted(true);
-        setShowReview(true);
-        
-        // Show toast with corrected score warning
-        toast({
-          title: "Quiz Completed!",
-          description: `You scored ${results.score.toFixed(1)}% (Score was corrected due to calculation error)`,
-          variant: "default",
-        });
+            // Set all quiz completion states atomically to prevent race conditions
+      setQuizResults(results);
+      setQuizCompleted(true);
+      setShowReview(true);
+
+      // Refresh mastery score after quiz completion
+      refreshForScenario(REFRESH_SCENARIOS.QUIZ_COMPLETED);
+
+      // Show toast with corrected score warning
+      toast({
+        title: "Quiz Completed!",
+        description: `You scored ${results.score.toFixed(1)}% (Score was corrected due to calculation error)`,
+        variant: "default",
+      });
         
         console.warn("Used recalculated score due to zero score with correct answers");
         return; // Exit early with corrected results
@@ -490,6 +493,9 @@ export default function QuizDetails({ params }) {
       setQuizResults(results);
       setQuizCompleted(true);
       setShowReview(true);
+
+      // Refresh mastery score after quiz completion
+      refreshForScenario(REFRESH_SCENARIOS.QUIZ_COMPLETED);
 
       // Add a small delay to ensure the UI updates properly
       setTimeout(() => {
@@ -538,6 +544,9 @@ export default function QuizDetails({ params }) {
             description: `You scored ${results.score.toFixed(1)}%`,
           });
         }
+        
+        // Refresh mastery score after successful quiz completion (non-mock)
+        refreshForScenario(REFRESH_SCENARIOS.QUIZ_COMPLETED);
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
