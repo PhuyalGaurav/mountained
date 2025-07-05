@@ -537,7 +537,6 @@ export const apiService = {
 
   // User Progress
   getUserProgress: () => api.get("/user-progress/"),
-  getUserProgress_list: () => api.get("/user-progress_list"),
   getUserProgressById: (id) => api.get(`/user-progress/${id}/`),
 
   // Users - New endpoints in v2

@@ -6,6 +6,7 @@ import { apiService } from "@/app/services/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { refreshForScenario, REFRESH_SCENARIOS } from "@/lib/masteryScore";
 import {
   ArrowLeft,
   BookOpen,
@@ -172,6 +173,9 @@ export default function CourseDetails({ params }) {
         title: "Success!",
         description: `${type === 'quiz' ? 'Quiz' : type === 'flashcards' ? 'Flashcards' : type === 'studyTasks' ? 'Study Tasks' : 'Summary'} generated successfully!`,
       });
+      
+      // Refresh mastery score after content generation
+      refreshForScenario(REFRESH_SCENARIOS.CONTENT_GENERATED);
       
       // Refresh the page data after a short delay to allow backend processing
       setTimeout(() => {
@@ -609,6 +613,9 @@ const LearningMaterialsRenderer = ({
         title: "Success!",
         description: "Learning material uploaded successfully!",
       });
+      
+      // Refresh mastery score after material upload
+      refreshForScenario(REFRESH_SCENARIOS.MATERIAL_UPLOADED);
       
       // Refresh the page data
       setTimeout(() => {
