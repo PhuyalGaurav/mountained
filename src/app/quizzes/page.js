@@ -5,7 +5,13 @@ import { useAuth } from "@/app/services/auth-context";
 import { apiService } from "@/app/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -41,16 +47,16 @@ function generateQuizTitle(quiz) {
 
   // Generate descriptive title based on available data
   let title = "";
-  
+
   // Start with subject if available
   if (quiz.topic?.subject) {
     title = quiz.topic.subject;
-    
+
     // Add specific topic if it's different from subject
     if (quiz.topic.topic && quiz.topic.topic !== quiz.topic.subject) {
       title += `: ${quiz.topic.topic}`;
     }
-    
+
     // Add grade level
     if (quiz.topic.grade) {
       title += ` (Grade ${quiz.topic.grade})`;
@@ -69,7 +75,7 @@ function generateQuizTitle(quiz) {
     title = `${quiz.course.title} Quiz`;
   } else {
     // Last resort - generic but include difficulty
-    title = `${quiz.difficulty || 'Practice'} Quiz`;
+    title = `${quiz.difficulty || "Practice"} Quiz`;
     if (quiz.topic?.grade) {
       title += ` - Grade ${quiz.topic.grade}`;
     }
@@ -80,28 +86,28 @@ function generateQuizTitle(quiz) {
 
 function generateQuizSubtitle(quiz) {
   const parts = [];
-  
+
   // Add question count
   const questionCount = quiz.questions?.length || quiz.question_count || 0;
   if (questionCount > 0) {
-    parts.push(`${questionCount} question${questionCount !== 1 ? 's' : ''}`);
+    parts.push(`${questionCount} question${questionCount !== 1 ? "s" : ""}`);
   }
-  
+
   // Add difficulty
   if (quiz.difficulty) {
     parts.push(`${quiz.difficulty} difficulty`);
   }
-  
+
   // Add creation date
   if (quiz.created_at) {
     const date = new Date(quiz.created_at);
-    const isRecent = (Date.now() - date.getTime()) < (7 * 24 * 60 * 60 * 1000); // 7 days
+    const isRecent = Date.now() - date.getTime() < 7 * 24 * 60 * 60 * 1000; // 7 days
     if (isRecent) {
-      parts.push('Recently created');
+      parts.push("Recently created");
     }
   }
-  
-  return parts.join(' • ') || 'Practice quiz';
+
+  return parts.join(" • ") || "Practice quiz";
 }
 
 function generateQuizTopicLabel(quiz) {
@@ -109,25 +115,25 @@ function generateQuizTopicLabel(quiz) {
   if (quiz.topic?.topic && quiz.topic.topic.trim()) {
     return quiz.topic.topic;
   }
-  
+
   if (quiz.topic?.subject && quiz.topic.subject.trim()) {
     return quiz.topic.subject;
   }
-  
+
   if (quiz.course?.title && quiz.course.title.trim()) {
     return quiz.course.title;
   }
-  
+
   if (quiz.material?.title && quiz.material.title.trim()) {
     return quiz.material.title;
   }
-  
+
   if (quiz.topic?.grade) {
     return `Grade ${quiz.topic.grade}`;
   }
-  
+
   // Last resort
-  return quiz.difficulty || 'General';
+  return quiz.difficulty || "General";
 }
 
 function getScoreColor(score) {
@@ -190,33 +196,45 @@ export default function QuizzesPage() {
       setLoading(true);
       const [quizzesResponse, attemptsResponse] = await Promise.all([
         apiService.getQuizzes(),
-        apiService.getQuizAttempts().catch(err => {
+        apiService.getQuizAttempts().catch((err) => {
           console.warn("Failed to fetch quiz attempts:", err);
           return { data: [] };
-        })
+        }),
       ]);
-      
+
       console.log("Quiz data structure:", quizzesResponse.data);
       console.log("Quiz attempts data:", attemptsResponse.data);
-      
+
       const quizzesData = quizzesResponse.data;
-      const attemptsData = Array.isArray(attemptsResponse.data) 
-        ? attemptsResponse.data 
+      const attemptsData = Array.isArray(attemptsResponse.data)
+        ? attemptsResponse.data
         : attemptsResponse.data?.results || [];
-      
+
       // Enhance quizzes with attempt data
-      const enhancedQuizzes = quizzesData.map(quiz => {
-        const quizAttempts = attemptsData.filter(attempt => attempt.quiz === quiz.id);
-        const completedAttempts = quizAttempts.filter(attempt => attempt.score !== null);
-        const bestScore = completedAttempts.length > 0 
-          ? Math.max(...completedAttempts.map(a => a.score || 0))
-          : null;
-        const avgScore = completedAttempts.length > 0
-          ? Math.round(completedAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / completedAttempts.length)
-          : null;
-        const lastAttempt = quizAttempts.length > 0 
-          ? quizAttempts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
-          : null;
+      const enhancedQuizzes = quizzesData.map((quiz) => {
+        const quizAttempts = attemptsData.filter(
+          (attempt) => attempt.quiz === quiz.id
+        );
+        const completedAttempts = quizAttempts.filter(
+          (attempt) => attempt.score !== null
+        );
+        const bestScore =
+          completedAttempts.length > 0
+            ? Math.max(...completedAttempts.map((a) => a.score || 0))
+            : null;
+        const avgScore =
+          completedAttempts.length > 0
+            ? Math.round(
+                completedAttempts.reduce((sum, a) => sum + (a.score || 0), 0) /
+                  completedAttempts.length
+              )
+            : null;
+        const lastAttempt =
+          quizAttempts.length > 0
+            ? quizAttempts.sort(
+                (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+              )[0]
+            : null;
 
         return {
           ...quiz,
@@ -226,11 +244,15 @@ export default function QuizzesPage() {
           bestScore,
           avgScore,
           lastAttempt,
-          status: lastAttempt?.score !== null ? 'completed' : 
-                  quizAttempts.length > 0 ? 'in_progress' : 'not_started'
+          status:
+            lastAttempt?.score !== null
+              ? "completed"
+              : quizAttempts.length > 0
+              ? "in_progress"
+              : "not_started",
         };
       });
-      
+
       setQuizzes(enhancedQuizzes);
       setFilteredQuizzes(enhancedQuizzes);
       setQuizAttempts(attemptsData);
@@ -260,19 +282,23 @@ export default function QuizzesPage() {
       filtered = filtered.filter((quiz) => {
         const title = generateQuizTitle(quiz).toLowerCase();
         const searchLower = searchTerm.toLowerCase();
-        return title.includes(searchLower) ||
-               quiz.topic?.topic?.toLowerCase().includes(searchLower) ||
-               quiz.topic?.subject?.toLowerCase().includes(searchLower) ||
-               quiz.material?.title?.toLowerCase().includes(searchLower) ||
-               quiz.course?.title?.toLowerCase().includes(searchLower);
+        return (
+          title.includes(searchLower) ||
+          quiz.topic?.topic?.toLowerCase().includes(searchLower) ||
+          quiz.topic?.subject?.toLowerCase().includes(searchLower) ||
+          quiz.material?.title?.toLowerCase().includes(searchLower) ||
+          quiz.course?.title?.toLowerCase().includes(searchLower)
+        );
       });
     }
 
     // Filter by difficulty
     if (selectedDifficulty) {
-      filtered = filtered.filter((quiz) => quiz.difficulty === selectedDifficulty);
+      filtered = filtered.filter(
+        (quiz) => quiz.difficulty === selectedDifficulty
+      );
     }
-    
+
     // Filter by topic/subject
     if (selectedTopic) {
       filtered = filtered.filter((quiz) => {
@@ -299,7 +325,9 @@ export default function QuizzesPage() {
         filtered.sort((a, b) => (b.bestScore || 0) - (a.bestScore || 0));
         break;
       case "title":
-        filtered.sort((a, b) => generateQuizTitle(a).localeCompare(generateQuizTitle(b)));
+        filtered.sort((a, b) =>
+          generateQuizTitle(a).localeCompare(generateQuizTitle(b))
+        );
         break;
       case "attempts":
         filtered.sort((a, b) => (b.attemptCount || 0) - (a.attemptCount || 0));
@@ -309,7 +337,14 @@ export default function QuizzesPage() {
     }
 
     setFilteredQuizzes(filtered);
-  }, [quizzes, searchTerm, selectedDifficulty, selectedTopic, selectedStatus, sortBy]);
+  }, [
+    quizzes,
+    searchTerm,
+    selectedDifficulty,
+    selectedTopic,
+    selectedStatus,
+    sortBy,
+  ]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -363,7 +398,9 @@ export default function QuizzesPage() {
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">My Quizzes</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                My Quizzes
+              </h1>
               <p className="text-gray-600 mt-1 lg:mt-2">
                 Practice with your AI-generated quizzes and track your progress
               </p>
@@ -398,7 +435,9 @@ export default function QuizzesPage() {
                   <BookOpen className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
                 </div>
                 <div className="ml-3 lg:ml-4">
-                  <p className="text-xs lg:text-sm font-medium text-gray-500">Total Quizzes</p>
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">
+                    Total Quizzes
+                  </p>
                   <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {quizzes.length}
                   </p>
@@ -414,9 +453,11 @@ export default function QuizzesPage() {
                   <CheckCircle className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
                 </div>
                 <div className="ml-3 lg:ml-4">
-                  <p className="text-xs lg:text-sm font-medium text-gray-500">Completed</p>
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">
+                    Completed
+                  </p>
                   <p className="text-xl lg:text-2xl font-semibold text-gray-900">
-                    {quizzes.filter(q => q.status === 'completed').length}
+                    {quizzes.filter((q) => q.status === "completed").length}
                   </p>
                 </div>
               </div>
@@ -430,13 +471,20 @@ export default function QuizzesPage() {
                   <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8 text-purple-600" />
                 </div>
                 <div className="ml-3 lg:ml-4">
-                  <p className="text-xs lg:text-sm font-medium text-gray-500">Avg Score</p>
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">
+                    Avg Score
+                  </p>
                   <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {(() => {
-                      const completedQuizzes = quizzes.filter(q => q.bestScore !== null);
+                      const completedQuizzes = quizzes.filter(
+                        (q) => q.bestScore !== null
+                      );
                       if (completedQuizzes.length === 0) return "—";
                       const avg = Math.round(
-                        completedQuizzes.reduce((sum, q) => sum + q.bestScore, 0) / completedQuizzes.length
+                        completedQuizzes.reduce(
+                          (sum, q) => sum + q.bestScore,
+                          0
+                        ) / completedQuizzes.length
                       );
                       return `${avg}%`;
                     })()}
@@ -453,11 +501,17 @@ export default function QuizzesPage() {
                   <Target className="h-6 w-6 lg:h-8 lg:w-8 text-yellow-600" />
                 </div>
                 <div className="ml-3 lg:ml-4">
-                  <p className="text-xs lg:text-sm font-medium text-gray-500">Best Score</p>
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">
+                    Best Score
+                  </p>
                   <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {(() => {
-                      const scores = quizzes.map(q => q.bestScore).filter(s => s !== null);
-                      return scores.length > 0 ? `${Math.max(...scores)}%` : "—";
+                      const scores = quizzes
+                        .map((q) => q.bestScore)
+                        .filter((s) => s !== null);
+                      return scores.length > 0
+                        ? `${Math.max(...scores)}%`
+                        : "—";
                     })()}
                   </p>
                 </div>
@@ -472,7 +526,9 @@ export default function QuizzesPage() {
                   <History className="h-6 w-6 lg:h-8 lg:w-8 text-indigo-600" />
                 </div>
                 <div className="ml-3 lg:ml-4">
-                  <p className="text-xs lg:text-sm font-medium text-gray-500">Total Attempts</p>
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">
+                    Total Attempts
+                  </p>
                   <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {quizzes.reduce((sum, q) => sum + (q.attemptCount || 0), 0)}
                   </p>
@@ -525,11 +581,15 @@ export default function QuizzesPage() {
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Topics</option>
-                  {Array.from(new Set(quizzes.map(quiz => generateQuizTopicLabel(quiz))))
-                    .filter(topic => topic && topic !== 'General')
+                  {Array.from(
+                    new Set(quizzes.map((quiz) => generateQuizTopicLabel(quiz)))
+                  )
+                    .filter((topic) => topic && topic !== "General")
                     .sort()
-                    .map(topic => (
-                      <option key={topic} value={topic}>{topic}</option>
+                    .map((topic) => (
+                      <option key={topic} value={topic}>
+                        {topic}
+                      </option>
                     ))}
                 </select>
               </div>
@@ -552,20 +612,37 @@ export default function QuizzesPage() {
                 <div className="flex items-center border border-gray-300 rounded-md">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`p-2 ${viewMode === "grid" ? "bg-blue-100 text-blue-600" : "text-gray-500"}`}
+                    className={`p-2 ${
+                      viewMode === "grid"
+                        ? "bg-blue-100 text-blue-600"
+                        : "text-gray-500"
+                    }`}
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`p-2 ${viewMode === "list" ? "bg-blue-100 text-blue-600" : "text-gray-500"}`}
+                    className={`p-2 ${
+                      viewMode === "list"
+                        ? "bg-blue-100 text-blue-600"
+                        : "text-gray-500"
+                    }`}
                   >
                     <List className="h-4 w-4" />
                   </button>
                 </div>
 
-                {(searchTerm || selectedDifficulty || selectedTopic || selectedStatus || sortBy !== "recent") && (
-                  <Button variant="outline" onClick={clearFilters} size="sm" className="whitespace-nowrap">
+                {(searchTerm ||
+                  selectedDifficulty ||
+                  selectedTopic ||
+                  selectedStatus ||
+                  sortBy !== "recent") && (
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    size="sm"
+                    className="whitespace-nowrap"
+                  >
                     Clear Filters
                   </Button>
                 )}
@@ -576,10 +653,13 @@ export default function QuizzesPage() {
 
         {/* Quizzes Display */}
         {loading ? (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-            : "space-y-4"
-          }>
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
+            }
+          >
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardContent className="p-6">
@@ -595,11 +675,13 @@ export default function QuizzesPage() {
             <CardContent className="text-center py-12">
               <FileQuestion className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {quizzes.length === 0 ? "No quizzes found" : "No matching quizzes"}
+                {quizzes.length === 0
+                  ? "No quizzes found"
+                  : "No matching quizzes"}
               </h3>
               <p className="text-gray-500 mb-4">
-                {quizzes.length === 0 
-                  ? "You haven't created any quizzes yet." 
+                {quizzes.length === 0
+                  ? "You haven't created any quizzes yet."
                   : "Try adjusting your filters to find more quizzes."}
               </p>
               <div className="flex justify-center gap-4">
@@ -648,7 +730,9 @@ function QuizGridCard({ quiz, router }) {
           </span>
           <div className="flex items-center text-xs lg:text-sm text-gray-500">
             <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-            <span>{quiz.questions?.length || quiz.question_count || 0} questions</span>
+            <span>
+              {quiz.questions?.length || quiz.question_count || 0} questions
+            </span>
           </div>
         </div>
 
@@ -665,16 +749,18 @@ function QuizGridCard({ quiz, router }) {
           {quiz.attemptCount > 0 && (
             <div className="flex items-center justify-between text-xs lg:text-sm">
               <span className="text-gray-500">
-                {quiz.attemptCount} attempt{quiz.attemptCount !== 1 ? 's' : ''}
+                {quiz.attemptCount} attempt{quiz.attemptCount !== 1 ? "s" : ""}
               </span>
               {quiz.bestScore !== null && (
-                <span className={`font-medium ${getScoreColor(quiz.bestScore)}`}>
+                <span
+                  className={`font-medium ${getScoreColor(quiz.bestScore)}`}
+                >
                   Best: {quiz.bestScore}%
                 </span>
               )}
             </div>
           )}
-          
+
           {quiz.avgScore !== null && quiz.completedAttempts > 1 && (
             <div className="flex items-center justify-between text-xs lg:text-sm">
               <span className="text-gray-500">Average Score</span>
@@ -691,7 +777,11 @@ function QuizGridCard({ quiz, router }) {
             <span>{new Date(quiz.created_at).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center">
-            <span className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(quiz.status)}`}></span>
+            <span
+              className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(
+                quiz.status
+              )}`}
+            ></span>
             <span className={getStatusTextColor(quiz.status)}>
               {getStatusText(quiz.status)}
             </span>
@@ -704,11 +794,15 @@ function QuizGridCard({ quiz, router }) {
             className="flex-1 flex items-center justify-center gap-1 lg:gap-2 text-sm"
           >
             <Play className="h-3 w-3 lg:h-4 lg:w-4" />
-            {quiz.status === 'completed' ? 'Retake' : 'Start Quiz'}
+            {quiz.status === "completed" ? "Retake" : "Start Quiz"}
           </Button>
           {quiz.attemptCount > 0 && (
             <Button
-              onClick={() => router.push(`/quizzes/${quiz.id}?attemptId=${quiz.lastAttempt?.id}`)}
+              onClick={() =>
+                router.push(
+                  `/quizzes/${quiz.id}?attemptId=${quiz.lastAttempt?.id}`
+                )
+              }
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
@@ -746,7 +840,9 @@ function QuizListCard({ quiz, router }) {
             <div className="flex flex-wrap items-center gap-3 lg:gap-4 text-xs lg:text-sm text-gray-500">
               <div className="flex items-center">
                 <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-                <span>{quiz.questions?.length || quiz.question_count || 0} questions</span>
+                <span>
+                  {quiz.questions?.length || quiz.question_count || 0} questions
+                </span>
               </div>
               <div className="flex items-center">
                 <Calendar className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
@@ -755,11 +851,18 @@ function QuizListCard({ quiz, router }) {
               {quiz.attemptCount > 0 && (
                 <div className="flex items-center">
                   <History className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-                  <span>{quiz.attemptCount} attempt{quiz.attemptCount !== 1 ? 's' : ''}</span>
+                  <span>
+                    {quiz.attemptCount} attempt
+                    {quiz.attemptCount !== 1 ? "s" : ""}
+                  </span>
                 </div>
               )}
               <div className="flex items-center">
-                <span className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(quiz.status)}`}></span>
+                <span
+                  className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(
+                    quiz.status
+                  )}`}
+                ></span>
                 <span className={getStatusTextColor(quiz.status)}>
                   {getStatusText(quiz.status)}
                 </span>
@@ -771,23 +874,31 @@ function QuizListCard({ quiz, router }) {
             {quiz.bestScore !== null && (
               <div className="text-center lg:text-right">
                 <div className="text-xs text-gray-500">Best Score</div>
-                <div className={`text-base lg:text-lg font-bold ${getScoreColor(quiz.bestScore)}`}>
+                <div
+                  className={`text-base lg:text-lg font-bold ${getScoreColor(
+                    quiz.bestScore
+                  )}`}
+                >
                   {quiz.bestScore}%
                 </div>
               </div>
             )}
-            
+
             <div className="flex gap-2">
               <Button
                 onClick={() => router.push(`/quizzes/${quiz.id}`)}
                 className="flex items-center gap-1 lg:gap-2 text-sm"
               >
                 <Play className="h-3 w-3 lg:h-4 lg:w-4" />
-                {quiz.status === 'completed' ? 'Retake' : 'Start'}
+                {quiz.status === "completed" ? "Retake" : "Start"}
               </Button>
               {quiz.attemptCount > 0 && (
                 <Button
-                  onClick={() => router.push(`/quizzes/${quiz.id}?attemptId=${quiz.lastAttempt?.id}`)}
+                  onClick={() =>
+                    router.push(
+                      `/quizzes/${quiz.id}?attemptId=${quiz.lastAttempt?.id}`
+                    )
+                  }
                   variant="outline"
                   className="flex items-center gap-1 lg:gap-2 text-sm"
                 >

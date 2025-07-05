@@ -26,6 +26,9 @@ export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState(null);
   const [summaryStats, setSummaryStats] = useState(null);
   const [analyticsData, setAnalyticsData] = useState([]);
+  const [quizData, setQuizData] = useState([]);
+  const [quizAttempts, setQuizAttempts] = useState([]);
+  const [userProgress, setUserProgress] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -44,111 +47,162 @@ export default function DashboardPage() {
     try {
       setLoadingData(true);
 
-      // Fetch analytics dashboard data, summary stats, and analytics data in parallel
-      const [dashboardResponse, summaryResponse, analyticsResponse] =
-        await Promise.all([
-          apiService.getAnalyticsDashboard().catch((err) => {
-            console.warn("Dashboard data not available:", err);
-            return { data: null };
-          }),
-          apiService.getAnalyticsSummaryStats().catch((err) => {
-            console.warn("Summary stats not available:", err);
-            return { data: null };
-          }),
-          apiService.getAnalytics().catch((err) => {
-            console.warn("Analytics data not available:", err);
-            return { data: [] };
-          }),
-        ]);
+      // Fetch all available data from APIs
+      const [
+        dashboardResponse,
+        summaryResponse,
+        analyticsResponse,
+        quizzesResponse,
+        quizAttemptsResponse,
+        userProgressResponse,
+      ] = await Promise.all([
+        apiService.getAnalyticsDashboard().catch((err) => {
+          console.warn("Dashboard data not available:", err);
+          return { data: null };
+        }),
+        apiService.getAnalyticsSummaryStats().catch((err) => {
+          console.warn("Summary stats not available:", err);
+          return { data: null };
+        }),
+        apiService.getAnalytics().catch((err) => {
+          console.warn("Analytics data not available:", err);
+          return { data: [] };
+        }),
+        apiService.getQuizzes().catch((err) => {
+          console.warn("Quiz data not available:", err);
+          return { data: [] };
+        }),
+        apiService.getQuizAttempts().catch((err) => {
+          console.warn("Quiz attempts not available:", err);
+          return { data: [] };
+        }),
+        apiService.getUserProgress().catch((err) => {
+          console.warn("User progress not available:", err);
+          return { data: null };
+        }),
+      ]);
 
-      // Generate dummy data for better visualization
-      const dummyDashboard = {
-        total_quizzes_attempted: 47,
-        average_quiz_score: 85.4,
-        total_study_time: 156,
-        highest_quiz_score: 98.5,
-        recent_topics: [
-          { name: "Mathematics", count: 18 },
-          { name: "Physics", count: 14 },
-          { name: "Chemistry", count: 10 },
-          { name: "Biology", count: 5 },
-        ],
-        top_subjects: [
-          { name: "Algebra", average_score: 92 },
-          { name: "Geometry", average_score: 88 },
-          { name: "Physics Mechanics", average_score: 83 },
-          { name: "Chemical Bonds", average_score: 79 },
-        ],
-      };
-
-      const dummyAnalytics = Array.from({ length: 7 }).map((_, index) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - index));
-        return {
-          timestamp: date.toISOString(),
-          quizzes_attempted: 2 + Math.floor(Math.random() * 4),
-          average_score: 75 + Math.random() * 20,
-          study_time: 1.5 + Math.random() * 3,
-        };
+      console.log("API Responses:", {
+        dashboard: dashboardResponse.data,
+        summary: summaryResponse.data,
+        analytics: analyticsResponse.data,
+        quizzes: quizzesResponse.data,
+        attempts: quizAttemptsResponse.data,
+        progress: userProgressResponse.data,
       });
 
-      setDashboardData(dashboardResponse.data || dummyDashboard);
-      setSummaryStats(summaryResponse.data || [{ total_study_time: 156 }]);
-      setAnalyticsData(
-        analyticsResponse.data.length > 0
-          ? analyticsResponse.data
-          : dummyAnalytics
+      console.log("Processed data:", {
+        dashboardDataLength: dashboardResponse.data
+          ? Object.keys(dashboardResponse.data).length
+          : 0,
+        summaryStatsLength: summaryResponse.data
+          ? Array.isArray(summaryResponse.data)
+            ? summaryResponse.data.length
+            : Object.keys(summaryResponse.data).length
+          : 0,
+        analyticsDataLength: (analyticsResponse.data || []).length,
+        quizDataLength: Array.isArray(quizzesResponse.data)
+          ? quizzesResponse.data.length
+          : 0,
+        quizAttemptsLength: Array.isArray(quizAttemptsResponse.data)
+          ? quizAttemptsResponse.data.length
+          : 0,
+        userProgressAvailable: !!userProgressResponse.data,
+      });
+
+      setDashboardData(dashboardResponse.data);
+      setSummaryStats(summaryResponse.data);
+      setAnalyticsData(analyticsResponse.data || []);
+      setQuizData(
+        Array.isArray(quizzesResponse.data) ? quizzesResponse.data : []
       );
+      setQuizAttempts(
+        Array.isArray(quizAttemptsResponse.data)
+          ? quizAttemptsResponse.data
+          : []
+      );
+      setUserProgress(userProgressResponse.data);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      // Set dummy data on error
-      setDashboardData({
-        total_quizzes_attempted: 47,
-        average_quiz_score: 85.4,
-        total_study_time: 156,
-        highest_quiz_score: 98.5,
-        recent_topics: [
-          { name: "Mathematics", count: 18 },
-          { name: "Physics", count: 14 },
-          { name: "Chemistry", count: 10 },
-          { name: "Biology", count: 5 },
-        ],
-        top_subjects: [
-          { name: "Algebra", average_score: 92 },
-          { name: "Geometry", average_score: 88 },
-          { name: "Physics Mechanics", average_score: 83 },
-          { name: "Chemical Bonds", average_score: 79 },
-        ],
-      });
-      setAnalyticsData([]);
       toast({
-        title: "Notice",
-        description: "Using sample data for demonstration.",
-        variant: "default",
+        title: "Error",
+        description:
+          "Failed to load dashboard data. Please try refreshing the page.",
+        variant: "destructive",
       });
     } finally {
       setLoadingData(false);
     }
   };
 
-  // Extract stats from analytics data or use defaults
+  // Calculate real stats from API data
   const getStats = () => {
+    // Calculate from quiz attempts if available
+    if (quizAttempts && quizAttempts.length > 0) {
+      const completedAttempts = quizAttempts.filter(
+        (attempt) => attempt.score !== null && attempt.score !== undefined
+      );
+      const totalQuizzes = quizAttempts.length;
+      const averageScore =
+        completedAttempts.length > 0
+          ? Math.round(
+              completedAttempts.reduce(
+                (sum, attempt) => sum + (attempt.score || 0),
+                0
+              ) / completedAttempts.length
+            )
+          : 0;
+      const highestScore =
+        completedAttempts.length > 0
+          ? Math.max(...completedAttempts.map((attempt) => attempt.score || 0))
+          : 0;
+
+      return {
+        totalQuizzes,
+        completedQuizzes: completedAttempts.length,
+        averageScore,
+        highestScore,
+        totalCourses: quizData.length, // Number of available quizzes as proxy for courses
+        studyStreak: userProgress?.study_streak || 0,
+      };
+    }
+
+    // Use summary stats if available
     if (summaryStats && summaryStats.length > 0) {
       const stats = summaryStats[0];
       return {
         totalCourses: stats.total_courses || 0,
+        totalQuizzes: stats.total_quizzes || quizData.length,
         completedQuizzes: stats.completed_quizzes || 0,
-        averageScore: stats.average_score || 0,
+        averageScore: Math.round(stats.average_score || 0),
+        highestScore: Math.round(stats.highest_score || 0),
         studyStreak: stats.study_streak || 0,
       };
     }
 
-    // Default values when analytics data is not available
+    // Use dashboard data if available
+    if (dashboardData) {
+      return {
+        totalCourses: dashboardData.total_courses || quizData.length,
+        totalQuizzes:
+          dashboardData.total_quizzes_attempted ||
+          dashboardData.total_quizzes_taken ||
+          0,
+        completedQuizzes: dashboardData.completed_quizzes || 0,
+        averageScore: Math.round(dashboardData.average_quiz_score || 0),
+        highestScore: Math.round(dashboardData.highest_quiz_score || 0),
+        studyStreak: dashboardData.study_streak || 0,
+      };
+    }
+
+    // Fallback to zero values if no data is available
     return {
-      totalCourses: 12,
-      completedQuizzes: 24,
-      averageScore: 87,
-      studyStreak: 7,
+      totalCourses: quizData.length,
+      totalQuizzes: 0,
+      completedQuizzes: 0,
+      averageScore: 0,
+      highestScore: 0,
+      studyStreak: 0,
     };
   };
 
@@ -204,6 +258,18 @@ export default function DashboardPage() {
                 <FileQuestion className="h-4 w-4 mr-2" />
                 Take Quiz
               </Button>
+              <Button
+                onClick={fetchDashboardData}
+                variant="outline"
+                disabled={loadingData}
+                className="border-gray-300 text-gray-600 hover:bg-gray-50"
+              >
+                {loadingData ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -212,7 +278,7 @@ export default function DashboardPage() {
         {loadingData && (
           <div className="mb-6 flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            <p className="ml-3 text-gray-600">Loading your analytics...</p>
+            <p className="ml-3 text-gray-600">Loading your dashboard data...</p>
           </div>
         )}
 
@@ -225,10 +291,10 @@ export default function DashboardPage() {
                 <p className="text-orange-100 text-sm font-medium">
                   Quizzes Attempted
                 </p>
-                <p className="text-3xl font-bold mt-1">
-                  {dashboardData?.total_quizzes_attempted || 47}
+                <p className="text-3xl font-bold mt-1">{stats.totalQuizzes}</p>
+                <p className="text-orange-200 text-xs mt-1">
+                  {stats.completedQuizzes} completed
                 </p>
-                <p className="text-orange-200 text-xs mt-1">+5 this week</p>
               </div>
               <div className="bg-white bg-opacity-20 p-3 rounded-lg">
                 <FileQuestion className="h-8 w-8 text-orange-500" />
@@ -244,12 +310,14 @@ export default function DashboardPage() {
                   Average Score
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {dashboardData?.average_quiz_score || 85.4}%
+                  {stats.averageScore}%
                 </p>
                 <div className="flex items-center mt-2">
                   <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
                   <p className="text-green-600 text-xs font-medium">
-                    +2.3% from last week
+                    {stats.completedQuizzes > 0
+                      ? "Based on completed quizzes"
+                      : "No data yet"}
                   </p>
                 </div>
               </div>
@@ -259,20 +327,22 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Study Time */}
+          {/* Available Courses */}
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Study Time</p>
+                <p className="text-gray-500 text-sm font-medium">
+                  Available Quizzes
+                </p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {dashboardData?.total_study_time || 156}h
+                  {stats.totalCourses}
                 </p>
                 <p className="text-blue-600 text-xs mt-1 font-medium">
-                  This month
+                  Ready to take
                 </p>
               </div>
               <div className="bg-blue-50 p-3 rounded-lg">
-                <Clock className="h-8 w-8 text-blue-600" />
+                <BookOpen className="h-8 w-8 text-blue-600" />
               </div>
             </div>
           </div>
@@ -285,10 +355,12 @@ export default function DashboardPage() {
                   Highest Score
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {dashboardData?.highest_quiz_score || 98.5}%
+                  {stats.highestScore}%
                 </p>
                 <p className="text-purple-600 text-xs mt-1 font-medium">
-                  Personal best
+                  {stats.highestScore > 0
+                    ? "Personal best"
+                    : "Take your first quiz!"}
                 </p>
               </div>
               <div className="bg-purple-50 p-3 rounded-lg">
@@ -319,6 +391,18 @@ export default function DashboardPage() {
             </div>
             {analyticsData && analyticsData.length > 0 ? (
               <ProgressChart analytics={analyticsData} />
+            ) : quizAttempts && quizAttempts.length > 0 ? (
+              <ProgressChart
+                analytics={quizAttempts
+                  .filter((attempt) => attempt.score !== null)
+                  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                  .map((attempt) => ({
+                    timestamp: attempt.timestamp,
+                    average_score: attempt.score,
+                    study_time: 0.5, // Placeholder study time
+                    quizzes_attempted: 1,
+                  }))}
+              />
             ) : (
               <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
                 <div className="text-center">
@@ -340,66 +424,88 @@ export default function DashboardPage() {
               Recent Activity
             </h2>
             <div className="space-y-4">
-              {/* Activity Items */}
-              <div className="flex items-center p-3 bg-orange-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                    <FileQuestion className="h-4 w-4 text-white" />
+              {/* Activity Items from Quiz Attempts */}
+              {quizAttempts && quizAttempts.length > 0 ? (
+                quizAttempts
+                  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                  .slice(0, 3)
+                  .map((attempt, index) => {
+                    const quiz = quizData.find((q) => q.id === attempt.quiz);
+                    const score = attempt.score || 0;
+                    const timeAgo = new Date(
+                      attempt.timestamp
+                    ).toLocaleDateString();
+
+                    return (
+                      <div
+                        key={attempt.id || index}
+                        className="flex items-center p-3 bg-orange-50 rounded-lg"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                            <FileQuestion className="h-4 w-4 text-white" />
+                          </div>
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            Completed {quiz?.title || "Quiz"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Score: {Math.round(score)}% • {timeAgo}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+              ) : (
+                <div className="text-center py-8">
+                  <FileQuestion className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No recent activity</p>
+                  <p className="text-gray-400 text-xs">
+                    Take your first quiz to see activity here
+                  </p>
+                </div>
+              )}
+
+              {/* Study Streak */}
+              {stats.studyStreak > 0 && (
+                <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      <Target className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      {stats.studyStreak}-day study streak
+                    </p>
+                    <p className="text-xs text-gray-500">Keep it up!</p>
                   </div>
                 </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Completed Math Quiz
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Score: 92% • 2 hours ago
-                  </p>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-white" />
+              {/* Available Quizzes Call to Action */}
+              {stats.totalCourses > stats.totalQuizzes && (
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                    Ready to Learn
+                  </h3>
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <BookOpen className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                    <p className="text-sm text-blue-700 mb-2">
+                      {stats.totalCourses - stats.totalQuizzes} more quizzes
+                      available
+                    </p>
+                    <Button
+                      onClick={() => router.push("/quizzes")}
+                      size="sm"
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-xs"
+                    >
+                      Explore Quizzes
+                    </Button>
                   </div>
                 </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Started Physics Course
-                  </p>
-                  <p className="text-xs text-gray-500">Chapter 1 • Yesterday</p>
-                </div>
-              </div>
-
-              <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <Target className="h-4 w-4 text-white" />
-                  </div>
-                </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Achieved 7-day streak
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Keep it up! • 3 days ago
-                  </p>
-                </div>
-              </div>
-
-              {/* Important Tasks Placeholder */}
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Important Tasks
-                </h3>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <Target className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 mb-2">No urgent tasks</p>
-                  <p className="text-xs text-gray-400">
-                    Important tasks will appear here
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -409,19 +515,22 @@ export default function DashboardPage() {
           {/* Subject Performance Chart */}
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Subject Performance
+              Quiz Performance
             </h2>
-            {dashboardData &&
-            (dashboardData.top_subjects?.length > 0 ||
-              dashboardData.recent_topics?.length > 0) ? (
-              <SubjectPerformanceChart dashboardData={dashboardData} />
+            {quizAttempts && quizAttempts.length > 0 ? (
+              <SubjectPerformanceChart
+                dashboardData={{
+                  quiz_attempts: quizAttempts,
+                  quizzes: quizData,
+                }}
+              />
             ) : (
               <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
                 <div className="text-center">
                   <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500">No performance data available</p>
                   <p className="text-xs text-gray-400">
-                    Complete more quizzes to see subject breakdown
+                    Complete quizzes to see performance breakdown
                   </p>
                 </div>
               </div>
@@ -434,76 +543,114 @@ export default function DashboardPage() {
               Learning Insights
             </h2>
 
-            {/* Top Subjects */}
+            {/* Top Performing Quizzes */}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Top Performing Subjects
+                Top Performing Quizzes
               </h3>
               <div className="space-y-3">
-                {(dashboardData?.top_subjects || [])
-                  .slice(0, 3)
-                  .map((subject, index) => (
-                    <div
-                      key={subject.name}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
+                {quizAttempts && quizAttempts.length > 0 ? (
+                  quizAttempts
+                    .filter(
+                      (attempt) =>
+                        attempt.score !== null && attempt.score !== undefined
+                    )
+                    .sort((a, b) => (b.score || 0) - (a.score || 0))
+                    .slice(0, 3)
+                    .map((attempt, index) => {
+                      const quiz = quizData.find((q) => q.id === attempt.quiz);
+                      return (
                         <div
-                          className={`w-2 h-2 rounded-full mr-3 ${
-                            index === 0
-                              ? "bg-orange-500"
-                              : index === 1
-                              ? "bg-orange-400"
-                              : "bg-orange-300"
-                          }`}
-                        ></div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {subject.name}
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        {subject.average_score}%
-                      </span>
-                    </div>
-                  ))}
+                          key={attempt.id || index}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={`w-2 h-2 rounded-full mr-3 ${
+                                index === 0
+                                  ? "bg-orange-500"
+                                  : index === 1
+                                  ? "bg-orange-400"
+                                  : "bg-orange-300"
+                              }`}
+                            ></div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {quiz?.title || `Quiz ${attempt.quiz}`}
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {Math.round(attempt.score || 0)}%
+                          </span>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">No quiz results yet</p>
+                    <p className="text-xs text-gray-400">
+                      Complete quizzes to see performance insights
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Recent Topics */}
+            {/* Recent Quizzes */}
             <div className="border-t pt-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Most Studied Topics
+                Available Quizzes
               </h3>
               <div className="space-y-3">
-                {(dashboardData?.recent_topics || [])
-                  .slice(0, 4)
-                  .map((topic, index) => (
-                    <div
-                      key={topic.name}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        <BookOpen className="h-4 w-4 text-blue-500 mr-3" />
-                        <span className="text-sm text-gray-900">
-                          {topic.name}
+                {quizData && quizData.length > 0 ? (
+                  quizData.slice(0, 4).map((quiz, index) => {
+                    const attemptCount = quizAttempts.filter(
+                      (attempt) => attempt.quiz === quiz.id
+                    ).length;
+                    return (
+                      <div
+                        key={quiz.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center">
+                          <BookOpen className="h-4 w-4 text-blue-500 mr-3" />
+                          <span className="text-sm text-gray-900">
+                            {quiz.title || `Quiz ${quiz.id}`}
+                          </span>
+                        </div>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                          {attemptCount > 0
+                            ? `${attemptCount} attempts`
+                            : "Not attempted"}
                         </span>
                       </div>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        {topic.count} sessions
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">
+                      No quizzes available
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Create your first quiz to get started
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Study Recommendations */}
+            {/* Performance Recommendation */}
             <div className="mt-6 p-4 bg-orange-50 rounded-lg">
               <h3 className="text-sm font-semibold text-orange-800 mb-2">
                 💡 Study Recommendation
               </h3>
               <p className="text-sm text-orange-700">
-                Focus on Chemistry topics to improve your overall performance.
-                Consider reviewing Chemical Bonds.
+                {stats.averageScore > 0
+                  ? stats.averageScore >= 80
+                    ? "Great work! Consider challenging yourself with more advanced topics."
+                    : stats.averageScore >= 60
+                    ? "Good progress! Focus on reviewing incorrect answers to improve your scores."
+                    : "Keep practicing! Review the material and retake quizzes to build confidence."
+                  : "Start taking quizzes to get personalized study recommendations based on your performance."}
               </p>
             </div>
           </div>
