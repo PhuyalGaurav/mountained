@@ -357,18 +357,18 @@ export default function QuizzesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6 pt-16 lg:pt-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 lg:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Quizzes</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">My Quizzes</h1>
+              <p className="text-gray-600 mt-1 lg:mt-2">
                 Practice with your AI-generated quizzes and track your progress
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3">
               <Button
                 onClick={refreshData}
                 variant="outline"
@@ -390,16 +390,16 @@ export default function QuizzesPage() {
         </div>
 
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <BookOpen className="h-8 w-8 text-blue-600" />
+                  <BookOpen className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Quizzes</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="ml-3 lg:ml-4">
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">Total Quizzes</p>
+                  <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {quizzes.length}
                   </p>
                 </div>
@@ -408,14 +408,14 @@ export default function QuizzesPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Completed</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="ml-3 lg:ml-4">
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">Completed</p>
+                  <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {quizzes.filter(q => q.status === 'completed').length}
                   </p>
                 </div>
@@ -424,14 +424,14 @@ export default function QuizzesPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8 text-purple-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Avg Score</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="ml-3 lg:ml-4">
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">Avg Score</p>
+                  <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {(() => {
                       const completedQuizzes = quizzes.filter(q => q.bestScore !== null);
                       if (completedQuizzes.length === 0) return "—";
@@ -447,14 +447,14 @@ export default function QuizzesPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <Target className="h-8 w-8 text-yellow-600" />
+                  <Target className="h-6 w-6 lg:h-8 lg:w-8 text-yellow-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Best Score</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="ml-3 lg:ml-4">
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">Best Score</p>
+                  <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {(() => {
                       const scores = quizzes.map(q => q.bestScore).filter(s => s !== null);
                       return scores.length > 0 ? `${Math.max(...scores)}%` : "—";
@@ -466,14 +466,14 @@ export default function QuizzesPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <History className="h-8 w-8 text-indigo-600" />
+                  <History className="h-6 w-6 lg:h-8 lg:w-8 text-indigo-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Attempts</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="ml-3 lg:ml-4">
+                  <p className="text-xs lg:text-sm font-medium text-gray-500">Total Attempts</p>
+                  <p className="text-xl lg:text-2xl font-semibold text-gray-900">
                     {quizzes.reduce((sum, q) => sum + (q.attemptCount || 0), 0)}
                   </p>
                 </div>
@@ -483,10 +483,10 @@ export default function QuizzesPage() {
         </div>
 
         {/* Enhanced Search and Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="mb-4 lg:mb-6">
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -534,13 +534,13 @@ export default function QuizzesPage() {
                 </select>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <div className="flex items-center gap-1 lg:gap-2">
                   <SortDesc className="h-4 w-4 text-gray-500" />
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     <option value="recent">Recent</option>
                     <option value="score">Best Score</option>
@@ -565,7 +565,7 @@ export default function QuizzesPage() {
                 </div>
 
                 {(searchTerm || selectedDifficulty || selectedTopic || selectedStatus || sortBy !== "recent") && (
-                  <Button variant="outline" onClick={clearFilters} size="sm">
+                  <Button variant="outline" onClick={clearFilters} size="sm" className="whitespace-nowrap">
                     Clear Filters
                   </Button>
                 )}
@@ -618,13 +618,13 @@ export default function QuizzesPage() {
         ) : (
           <>
             {viewMode === "grid" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {filteredQuizzes.map((quiz) => (
                   <QuizGridCard key={quiz.id} quiz={quiz} router={router} />
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 lg:space-y-4">
                 {filteredQuizzes.map((quiz) => (
                   <QuizListCard key={quiz.id} quiz={quiz} router={router} />
                 ))}
@@ -641,29 +641,29 @@ export default function QuizzesPage() {
 function QuizGridCard({ quiz, router }) {
   return (
     <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+      <CardContent className="p-4 lg:p-6">
+        <div className="flex items-center justify-between mb-3 lg:mb-4">
+          <span className="px-2 lg:px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
             {generateQuizTopicLabel(quiz)}
           </span>
-          <div className="flex items-center text-sm text-gray-500">
-            <Clock className="h-4 w-4 mr-1" />
+          <div className="flex items-center text-xs lg:text-sm text-gray-500">
+            <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
             <span>{quiz.questions?.length || quiz.question_count || 0} questions</span>
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-900 mb-2 h-16 line-clamp-2">
+        <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2 h-12 lg:h-16 line-clamp-2">
           {generateQuizTitle(quiz)}
         </h3>
 
-        <p className="text-sm text-gray-600 mb-4 h-10 line-clamp-2">
+        <p className="text-xs lg:text-sm text-gray-600 mb-3 lg:mb-4 h-8 lg:h-10 line-clamp-2">
           {generateQuizSubtitle(quiz)}
         </p>
 
         {/* Enhanced Progress/Stats */}
-        <div className="space-y-3 mb-4">
+        <div className="space-y-2 lg:space-y-3 mb-3 lg:mb-4">
           {quiz.attemptCount > 0 && (
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs lg:text-sm">
               <span className="text-gray-500">
                 {quiz.attemptCount} attempt{quiz.attemptCount !== 1 ? 's' : ''}
               </span>
@@ -676,7 +676,7 @@ function QuizGridCard({ quiz, router }) {
           )}
           
           {quiz.avgScore !== null && quiz.completedAttempts > 1 && (
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs lg:text-sm">
               <span className="text-gray-500">Average Score</span>
               <span className={`font-medium ${getScoreColor(quiz.avgScore)}`}>
                 {quiz.avgScore}%
@@ -685,13 +685,13 @@ function QuizGridCard({ quiz, router }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100 mb-4">
+        <div className="flex items-center justify-between text-xs lg:text-sm text-gray-500 pt-3 lg:pt-4 border-t border-gray-100 mb-3 lg:mb-4">
           <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
+            <Calendar className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-1.5 text-gray-400" />
             <span>{new Date(quiz.created_at).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center">
-            <span className={`h-2 w-2 rounded-full mr-1.5 ${getStatusColor(quiz.status)}`}></span>
+            <span className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(quiz.status)}`}></span>
             <span className={getStatusTextColor(quiz.status)}>
               {getStatusText(quiz.status)}
             </span>
@@ -701,9 +701,9 @@ function QuizGridCard({ quiz, router }) {
         <div className="flex gap-2">
           <Button
             onClick={() => router.push(`/quizzes/${quiz.id}`)}
-            className="flex-1 flex items-center justify-center gap-2"
+            className="flex-1 flex items-center justify-center gap-1 lg:gap-2 text-sm"
           >
-            <Play className="h-4 w-4" />
+            <Play className="h-3 w-3 lg:h-4 lg:w-4" />
             {quiz.status === 'completed' ? 'Retake' : 'Start Quiz'}
           </Button>
           {quiz.attemptCount > 0 && (
@@ -713,7 +713,7 @@ function QuizGridCard({ quiz, router }) {
               size="sm"
               className="flex items-center gap-1"
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
             </Button>
           )}
         </div>
@@ -726,40 +726,40 @@ function QuizGridCard({ quiz, router }) {
 function QuizListCard({ quiz, router }) {
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+      <CardContent className="p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
           <div className="flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2 lg:mb-3">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-1">
                   {generateQuizTitle(quiz)}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs lg:text-sm text-gray-600">
                   {generateQuizSubtitle(quiz)}
                 </p>
               </div>
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 self-start">
+              <span className="px-2 lg:px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 self-start">
                 {generateQuizTopicLabel(quiz)}
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-3 lg:gap-4 text-xs lg:text-sm text-gray-500">
               <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-1" />
+                <Clock className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
                 <span>{quiz.questions?.length || quiz.question_count || 0} questions</span>
               </div>
               <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
+                <Calendar className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
                 <span>{new Date(quiz.created_at).toLocaleDateString()}</span>
               </div>
               {quiz.attemptCount > 0 && (
                 <div className="flex items-center">
-                  <History className="h-4 w-4 mr-1" />
+                  <History className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
                   <span>{quiz.attemptCount} attempt{quiz.attemptCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
               <div className="flex items-center">
-                <span className={`h-2 w-2 rounded-full mr-1.5 ${getStatusColor(quiz.status)}`}></span>
+                <span className={`h-2 w-2 rounded-full mr-1 lg:mr-1.5 ${getStatusColor(quiz.status)}`}></span>
                 <span className={getStatusTextColor(quiz.status)}>
                   {getStatusText(quiz.status)}
                 </span>
@@ -767,11 +767,11 @@ function QuizListCard({ quiz, router }) {
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-3">
             {quiz.bestScore !== null && (
               <div className="text-center lg:text-right">
                 <div className="text-xs text-gray-500">Best Score</div>
-                <div className={`text-lg font-bold ${getScoreColor(quiz.bestScore)}`}>
+                <div className={`text-base lg:text-lg font-bold ${getScoreColor(quiz.bestScore)}`}>
                   {quiz.bestScore}%
                 </div>
               </div>
@@ -780,18 +780,18 @@ function QuizListCard({ quiz, router }) {
             <div className="flex gap-2">
               <Button
                 onClick={() => router.push(`/quizzes/${quiz.id}`)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 lg:gap-2 text-sm"
               >
-                <Play className="h-4 w-4" />
+                <Play className="h-3 w-3 lg:h-4 lg:w-4" />
                 {quiz.status === 'completed' ? 'Retake' : 'Start'}
               </Button>
               {quiz.attemptCount > 0 && (
                 <Button
                   onClick={() => router.push(`/quizzes/${quiz.id}?attemptId=${quiz.lastAttempt?.id}`)}
                   variant="outline"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 lg:gap-2 text-sm"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
                   Review
                 </Button>
               )}
