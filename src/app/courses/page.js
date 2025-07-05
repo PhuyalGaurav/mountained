@@ -13,10 +13,8 @@ import {
   Search,
   Filter,
   ChevronRight,
-  Users,
-  Clock,
-  Award,
-  Star,
+  FileText,
+  GraduationCap,
 } from "lucide-react";
 
 export default function CoursesPage() {
@@ -26,6 +24,7 @@ export default function CoursesPage() {
   const [topics, setTopics] = useState([]);
   const [filteredTopics, setFilteredTopics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtering, setFiltering] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrade, setSelectedGrade] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -37,24 +36,41 @@ export default function CoursesPage() {
     try {
       setLoading(true);
       const response = await apiService.getCurriculumTopics();
-      const topicsData = response.data;
+      const topicsData = response.data || [];
       setTopics(topicsData);
 
-      // Extract unique grades and subjects for filters
+      // Extract unique grades and subjects for filters with error handling
       const uniqueGrades = [
-        ...new Set(topicsData.map((topic) => topic.grade)),
+        ...new Set(topicsData
+          .map((topic) => topic.grade)
+          .filter(grade => grade != null && grade !== '')
+        ),
       ].sort();
+      
       const uniqueSubjects = [
-        ...new Set(topicsData.map((topic) => topic.subject)),
+        ...new Set(topicsData
+          .map((topic) => topic.subject)
+          .filter(subject => subject != null && subject !== '')
+        ),
       ].sort();
 
       setGrades(uniqueGrades);
       setSubjects(uniqueSubjects);
     } catch (error) {
       console.error("Error fetching curriculum topics:", error);
+      
+      let errorMessage = "Failed to load courses. Please try again.";
+      if (error.response?.status === 401) {
+        errorMessage = "Authentication expired. Please log in again.";
+      } else if (error.response?.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (!navigator.onLine) {
+        errorMessage = "No internet connection. Please check your network.";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to load courses. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -63,26 +79,32 @@ export default function CoursesPage() {
   }, [toast]);
 
   const filterTopics = useCallback(() => {
-    let filtered = topics;
+    setFiltering(true);
+    
+    // Add a small delay to show loading state for better UX
+    setTimeout(() => {
+      let filtered = topics;
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (topic) =>
-          topic.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          topic.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          topic.unit.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+      if (searchTerm) {
+        filtered = filtered.filter(
+          (topic) =>
+            topic.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            topic.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            topic.unit.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
 
-    if (selectedGrade) {
-      filtered = filtered.filter((topic) => topic.grade === selectedGrade);
-    }
+      if (selectedGrade) {
+        filtered = filtered.filter((topic) => topic.grade === selectedGrade);
+      }
 
-    if (selectedSubject) {
-      filtered = filtered.filter((topic) => topic.subject === selectedSubject);
-    }
+      if (selectedSubject) {
+        filtered = filtered.filter((topic) => topic.subject === selectedSubject);
+      }
 
-    setFilteredTopics(filtered);
+      setFilteredTopics(filtered);
+      setFiltering(false);
+    }, 100);
   }, [topics, searchTerm, selectedGrade, selectedSubject]);
 
   useEffect(() => {
@@ -145,18 +167,20 @@ export default function CoursesPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
+              aria-label="Search courses by topic, subject, or unit"
             />
           </div>
 
           <select
             value={selectedGrade}
             onChange={(e) => setSelectedGrade(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Filter by grade"
           >
             <option value="">All Grades</option>
             {grades.map((grade) => (
               <option key={grade} value={grade}>
-                {grade}
+                Grade {grade}
               </option>
             ))}
           </select>
@@ -164,7 +188,8 @@ export default function CoursesPage() {
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Filter by subject"
           >
             <option value="">All Subjects</option>
             {subjects.map((subject) => (
@@ -183,7 +208,7 @@ export default function CoursesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -201,7 +226,7 @@ export default function CoursesPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Filter className="h-8 w-8 text-green-600" />
+              <FileText className="h-8 w-8 text-green-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Subjects</p>
@@ -215,26 +240,12 @@ export default function CoursesPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Users className="h-8 w-8 text-purple-600" />
+              <GraduationCap className="h-8 w-8 text-purple-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Grades</p>
+              <p className="text-sm font-medium text-gray-500">Grade Levels</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {grades.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Award className="h-8 w-8 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Filtered</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {filteredTopics.length}
               </p>
             </div>
           </div>
@@ -242,12 +253,13 @@ export default function CoursesPage() {
       </div>
 
       {/* Courses Grid */}
-      {loading ? (
+      {loading || filtering ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
               className="bg-white p-6 rounded-lg shadow-sm border animate-pulse"
+              aria-label="Loading course information"
             >
               <div className="h-4 bg-gray-200 rounded mb-2"></div>
               <div className="h-3 bg-gray-200 rounded mb-4"></div>
@@ -257,51 +269,74 @@ export default function CoursesPage() {
         </div>
       ) : filteredTopics.length === 0 ? (
         <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No courses found
           </h3>
           <p className="text-gray-500">
-            Try adjusting your search or filter criteria.
+            {searchTerm || selectedGrade || selectedSubject
+              ? "Try adjusting your search or filter criteria."
+              : "No courses are available at the moment."}
           </p>
+          {(searchTerm || selectedGrade || selectedSubject) && (
+            <Button 
+              variant="outline" 
+              onClick={clearFilters}
+              className="mt-4"
+            >
+              Clear All Filters
+            </Button>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTopics.map((topic) => (
             <div
               key={topic.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-in-out cursor-pointer group"
+              className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md hover:border-orange-200 transition-all duration-200 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               onClick={() => router.push(`/courses/${topic.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  router.push(`/courses/${topic.id}`);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`View course: ${topic.topic} - ${topic.subject}, Grade ${topic.grade}`}
             >
               <div className="p-6">
-                <div className="flex items-center mb-4">
+                <div className="flex items-center gap-2 mb-4">
                   <span
                     className={`px-3 py-1 text-xs font-semibold rounded-full ${getSubjectColor(
                       topic.subject
                     )}`}
+                    aria-label={`Subject: ${topic.subject}`}
                   >
                     {topic.subject}
                   </span>
-                  <span className="ml-2 px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
-                    {topic.grade}
+                  <span 
+                    className="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full"
+                    aria-label={`Grade level: ${topic.grade}`}
+                  >
+                    Grade {topic.grade}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 h-16 group-hover:text-orange/85 transition-colors">
+                
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2">
                   {topic.topic}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4 h-10">
-                  Unit: {topic.unit}
+                
+                <p className="text-sm text-gray-600 mb-4">
+                  <span className="font-medium">Unit:</span> {topic.unit}
                 </p>
 
-                <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-1.5 text-gray-400" />
-                    <span>Est. 2-3 hours</span>
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <BookOpen className="h-4 w-4 mr-1" aria-hidden="true" />
+                    <span>Course Topic</span>
                   </div>
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 mr-1.5 text-yellow-400" />
-                    <span>4.8</span>
-                  </div>
+                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors" aria-hidden="true" />
                 </div>
               </div>
             </div>

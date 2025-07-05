@@ -18,6 +18,9 @@ import {
   Download,
   CheckCircle,
   Plus,
+  Upload,
+  Eye,
+  Trash2,
 } from "lucide-react";
 
 export default function CourseDetails({ params }) {
@@ -34,7 +37,7 @@ export default function CourseDetails({ params }) {
   const [summaries, setSummaries] = useState([]);
   const [studyTasks, setStudyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("quizzes");
+  const [activeTab, setActiveTab] = useState("materials");
   const [generating, setGenerating] = useState({
     flashcards: false,
     quiz: false,
@@ -276,10 +279,20 @@ export default function CourseDetails({ params }) {
         </div>
       </div>
 
-      {/* AI-Generated Resources */}
+      {/* Learning Resources */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab("materials")}
+              className={`${
+                activeTab === "materials"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              Learning Materials ({learningMaterials.length})
+            </button>
             <button
               onClick={() => setActiveTab("quizzes")}
               className={`${
@@ -323,6 +336,18 @@ export default function CourseDetails({ params }) {
           </nav>
         </div>
         <div className="mt-6">
+          {activeTab === "materials" && (
+            <LearningMaterialsRenderer
+              materials={learningMaterials}
+              onGenerateQuiz={(materialId) => generateContent("quiz", materialId)}
+              onGenerateFlashcards={(materialId) => generateContent("flashcards", materialId)}
+              onGenerateSummary={(materialId) => generateContent("summary", materialId)}
+              onGenerateStudyTasks={(materialId) => generateContent("studyTasks", materialId)}
+              topic={topic}
+              courseId={courseId}
+              refreshData={fetchCourseData}
+            />
+          )}
           {activeTab === "quizzes" && (
             <ContentRenderer
               type="quiz"
@@ -549,6 +574,238 @@ const ContentRenderer = ({
             }
             return null;
           })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LearningMaterialsRenderer = ({
+  materials,
+  onGenerateQuiz,
+  onGenerateFlashcards,
+  onGenerateSummary,
+  onGenerateStudyTasks,
+  topic,
+  courseId,
+  refreshData,
+}) => {
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('topic', courseId);
+
+      const response = await apiService.uploadLearningMaterial(formData);
+      
+      toast({
+        title: "Success!",
+        description: "Learning material uploaded successfully!",
+      });
+      
+      // Refresh the page data
+      setTimeout(() => {
+        refreshData();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.response?.data?.detail || "Failed to upload learning material. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (materialId) => {
+    if (!confirm('Are you sure you want to delete this learning material?')) {
+      return;
+    }
+
+    try {
+      await apiService.deleteLearningMaterial(materialId);
+      toast({
+        title: "Success!",
+        description: "Learning material deleted successfully!",
+      });
+      refreshData();
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete learning material. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownload = async (material) => {
+    try {
+      // Create a blob URL from the file URL and trigger download
+      const response = await fetch(material.file);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = material.file.split('/').pop() || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Learning Materials for {topic?.topic}</h3>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            id="file-upload"
+            className="hidden"
+            accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
+            onChange={handleFileUpload}
+            disabled={uploading}
+          />
+          <Button
+            asChild
+            disabled={uploading}
+            className="flex items-center gap-2"
+          >
+            <label htmlFor="file-upload" className="cursor-pointer">
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Upload Material
+                </>
+              )}
+            </label>
+          </Button>
+        </div>
+      </div>
+
+      {materials.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No learning materials yet
+          </h3>
+          <p className="text-gray-500">
+            Upload learning materials to get started with AI-powered content generation.
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            Supported formats: PDF, DOC, DOCX, TXT, PPT, PPTX
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {materials.map((material) => (
+            <div
+              key={material.id}
+              className="bg-gray-50 p-6 rounded-lg shadow-sm border"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg mb-2">
+                    {material.file.split('/').pop() || 'Learning Material'}
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Uploaded: {new Date(material.uploaded_at).toLocaleDateString()}
+                  </p>
+                  {material.extracted_text && (
+                    <div className="bg-white p-3 rounded border">
+                      <p className="text-sm text-gray-700">
+                        <strong>Preview:</strong> {material.extracted_text.slice(0, 200)}
+                        {material.extracted_text.length > 200 && '...'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload(material)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(material.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h5 className="font-medium mb-3">Generate AI Content from this material:</h5>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onGenerateQuiz(material.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <FileQuestion className="h-4 w-4" />
+                    Generate Quiz
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onGenerateFlashcards(material.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Generate Flashcards
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onGenerateSummary(material.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Generate Summary
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onGenerateStudyTasks(material.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    Generate Study Tasks
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
