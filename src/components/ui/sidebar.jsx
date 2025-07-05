@@ -12,13 +12,10 @@ import {
   LogOut,
   Menu,
   BarChart3,
-  Moon,
-  Sun,
   GalleryHorizontalEnd,
   CalendarCheck,
   Download,
 } from "lucide-react";
-import { useTheme } from "@/app/services/theme-context";
 import Image from "next/image";
 
 const sideBarItems = [
@@ -66,7 +63,6 @@ const sideBarItems = [
 
 export function Sidebar() {
   const { isAuthenticated, logout, user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -98,11 +94,7 @@ export function Sidebar() {
           {/* Logo/Brand */}
           <div className="flex items-center justify-start h-16 px-6 pt-4 bg-primary">
             <Image
-              src={
-                theme === "dark"
-                  ? "/mountainEdlogo-white.png"
-                  : "/mountainEdlogo-dark.png"
-              }
+              src={"/mountainEdlogo-dark.png"}
               alt="MountainEd Logo"
               width={32}
               height={32}
@@ -162,22 +154,6 @@ export function Sidebar() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleTheme}
-                className="flex items-center px-4 py-2 text-sm font-medium text-foreground rounded-lg hover:bg-accent hover:text-primary transition-colors"
-              >
-                {theme === "dark" ? (
-                  <>
-                    <Sun className="mr-3 h-4 w-4" />
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon className="mr-3 h-4 w-4" />
-                    Dark Mode
-                  </>
-                )}
-              </button>
               <button
                 onClick={logout}
                 className="flex items-center px-4 py-2 text-sm font-medium text-foreground rounded-lg hover:bg-accent hover:text-primary transition-colors"
