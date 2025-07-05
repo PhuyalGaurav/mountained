@@ -184,8 +184,8 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-gray-600 mt-1">
-                Welcome back, {user?.username || user?.email || "User"}! Here's
-                your learning overview.
+                Welcome back, {user?.username || user?.email || "User"}!
+                Here&apos;s your learning overview.
               </p>
             </div>
             <div className="flex space-x-3 mt-4 md:mt-0">

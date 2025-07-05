@@ -78,9 +78,11 @@ export function Sidebar() {
         {" "}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-md bg-card shadow-md hover:bg-accent"
+          className="p-2 rounded-md bg-white shadow-md focus:outline-none"
         >
-          <Menu className="h-6 w-6 text-foreground" />
+          <Menu
+            className={isOpen ? "hidden" : "h-6 w-6 text-foreground bg-white"}
+          />
         </button>
       </div>
 
@@ -121,7 +123,7 @@ export function Sidebar() {
                   href={item.href}
                   className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-orange/80 text-primary border-l-2 border-primary h-10 my-2 rounded-xl"
+                      ? "bg-orange/90 text-primary border-l-2 border-primary h-10 my-2 rounded-xl"
                       : "text-foreground hover:bg-accent hover:text-primary"
                   }`}
                   onClick={() => setIsOpen(false)}
@@ -169,7 +171,7 @@ export function Sidebar() {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-30 bg-white bg-opacity-50 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}

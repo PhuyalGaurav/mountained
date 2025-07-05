@@ -41,16 +41,18 @@ export default function CoursesPage() {
 
       // Extract unique grades and subjects for filters with error handling
       const uniqueGrades = [
-        ...new Set(topicsData
-          .map((topic) => topic.grade)
-          .filter(grade => grade != null && grade !== '')
+        ...new Set(
+          topicsData
+            .map((topic) => topic.grade)
+            .filter((grade) => grade != null && grade !== "")
         ),
       ].sort();
-      
+
       const uniqueSubjects = [
-        ...new Set(topicsData
-          .map((topic) => topic.subject)
-          .filter(subject => subject != null && subject !== '')
+        ...new Set(
+          topicsData
+            .map((topic) => topic.subject)
+            .filter((subject) => subject != null && subject !== "")
         ),
       ].sort();
 
@@ -58,7 +60,7 @@ export default function CoursesPage() {
       setSubjects(uniqueSubjects);
     } catch (error) {
       console.error("Error fetching curriculum topics:", error);
-      
+
       let errorMessage = "Failed to load courses. Please try again.";
       if (error.response?.status === 401) {
         errorMessage = "Authentication expired. Please log in again.";
@@ -67,7 +69,7 @@ export default function CoursesPage() {
       } else if (!navigator.onLine) {
         errorMessage = "No internet connection. Please check your network.";
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -80,7 +82,7 @@ export default function CoursesPage() {
 
   const filterTopics = useCallback(() => {
     setFiltering(true);
-    
+
     // Add a small delay to show loading state for better UX
     setTimeout(() => {
       let filtered = topics;
@@ -99,7 +101,9 @@ export default function CoursesPage() {
       }
 
       if (selectedSubject) {
-        filtered = filtered.filter((topic) => topic.subject === selectedSubject);
+        filtered = filtered.filter(
+          (topic) => topic.subject === selectedSubject
+        );
       }
 
       setFilteredTopics(filtered);
@@ -150,7 +154,7 @@ export default function CoursesPage() {
               Explore curriculum topics and learning materials
             </p>
           </div>
-          <Button className="bg-orange/80 hover:border-solid">
+          <Button className="bg-orange/90 hover:border-solid">
             <Plus className="mr-2 h-4 w-4" />
             Request New Course
           </Button>
@@ -269,7 +273,10 @@ export default function CoursesPage() {
         </div>
       ) : filteredTopics.length === 0 ? (
         <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
+          <BookOpen
+            className="h-12 w-12 text-gray-400 mx-auto mb-4"
+            aria-hidden="true"
+          />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No courses found
           </h3>
@@ -279,11 +286,7 @@ export default function CoursesPage() {
               : "No courses are available at the moment."}
           </p>
           {(searchTerm || selectedGrade || selectedSubject) && (
-            <Button 
-              variant="outline" 
-              onClick={clearFilters}
-              className="mt-4"
-            >
+            <Button variant="outline" onClick={clearFilters} className="mt-4">
               Clear All Filters
             </Button>
           )}
@@ -296,7 +299,7 @@ export default function CoursesPage() {
               className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md hover:border-orange-200 transition-all duration-200 cursor-pointer group focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
               onClick={() => router.push(`/courses/${topic.id}`)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   router.push(`/courses/${topic.id}`);
                 }
@@ -315,18 +318,18 @@ export default function CoursesPage() {
                   >
                     {topic.subject}
                   </span>
-                  <span 
+                  <span
                     className="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full"
                     aria-label={`Grade level: ${topic.grade}`}
                   >
                     Grade {topic.grade}
                   </span>
                 </div>
-                
+
                 <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2">
                   {topic.topic}
                 </h3>
-                
+
                 <p className="text-sm text-gray-600 mb-4">
                   <span className="font-medium">Unit:</span> {topic.unit}
                 </p>
@@ -336,7 +339,10 @@ export default function CoursesPage() {
                     <BookOpen className="h-4 w-4 mr-1" aria-hidden="true" />
                     <span>Course Topic</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors" aria-hidden="true" />
+                  <ChevronRight
+                    className="h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-colors"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
             </div>
