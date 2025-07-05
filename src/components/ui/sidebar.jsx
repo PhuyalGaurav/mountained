@@ -16,6 +16,7 @@ import {
   Sun,
   GalleryHorizontalEnd,
   CalendarCheck,
+  Download,
 } from "lucide-react";
 import { useTheme } from "@/app/services/theme-context";
 import Image from "next/image";
@@ -35,6 +36,11 @@ const sideBarItems = [
     name: "Quizzes",
     href: "/quizzes",
     icon: FileQuestion,
+  },
+  {
+    name: "Exported Quizzes",
+    href: "/exported-quizzes",
+    icon: Download,
   },
   {
     name: "Analytics",

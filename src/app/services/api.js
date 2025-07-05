@@ -174,7 +174,16 @@ export const apiService = {
 
   // Exported Quizzes - New in v2
   getExportedQuizzes: () => api.get("/exported-quizzes/"),
-  createExportedQuiz: (data) => api.post("/exported-quizzes/", data),
+  createExportedQuiz: (data) => {
+    // Handle FormData separately from JSON data
+    const config = {};
+    if (data instanceof FormData) {
+      config.headers = {
+        'Content-Type': 'multipart/form-data'
+      };
+    }
+    return api.post("/exported-quizzes/", data, config);
+  },
   getExportedQuiz: (id) => api.get(`/exported-quizzes/${id}/`),
   updateExportedQuiz: (id, data) => api.put(`/exported-quizzes/${id}/`, data),
   deleteExportedQuiz: (id) => api.delete(`/exported-quizzes/${id}/`),
@@ -242,7 +251,19 @@ export const apiService = {
       console.log("Attempting to submit to backend quiz submission endpoint...");
       const response = await api.post(`/quizzes/${quizId}/submit_answers/`, answersData);
       console.log("✅ Backend submission successful:", response.data);
-      return response;
+      
+      // Validate the response data before returning
+      const responseData = response.data;
+      
+      // Check if we got a valid score
+      if (typeof responseData.score === 'number' && responseData.score >= 0) {
+        console.log("✅ Backend returned valid score:", responseData.score);
+        return response;
+      } else {
+        console.warn("⚠️ Backend returned invalid/missing score, falling back to local calculation");
+        console.log("Backend response data:", responseData);
+        // Don't return early - fall through to local calculation
+      }
     } catch (backendError) {
       console.log("❌ Backend quiz submission failed:", backendError);
       console.log("Status:", backendError.response?.status);
@@ -259,24 +280,36 @@ export const apiService = {
     // Process each question and determine if the answer is correct
     questions.forEach(question => {
       const userAnswer = answersData.answers[question.id];
-      console.log(`Processing question ${question.id}:`, {
-        userAnswer,
-        correct_option: question.correct_option,
-        correct_answer: question.correct_answer,
-        question_text: question.question_text
-      });
+      console.log(`\n=== Processing question ${question.id} ===`);
+      console.log('User answer:', userAnswer, '(type:', typeof userAnswer, ')');
+      console.log('Question correct_option:', question.correct_option, '(type:', typeof question.correct_option, ')');
+      console.log('Question correct_answer:', question.correct_answer, '(type:', typeof question.correct_answer, ')');
       
       if (userAnswer) {
         // Get the correct key (could be from correct_option or correct_answer field)
         const correctKey = question.correct_option || question.correct_answer;
+        console.log('Determined correct key:', correctKey, '(type:', typeof correctKey, ')');
         
-        // Direct comparison - userAnswer and correctKey should both be option keys (e.g., "a", "b", "c", "d")
-        const isCorrect = userAnswer === correctKey;
+        // Normalize both values to strings and trim whitespace for comparison
+        const normalizedUserAnswer = String(userAnswer).trim().toLowerCase();
+        const normalizedCorrectKey = String(correctKey).trim().toLowerCase();
         
-        console.log(`Question ${question.id} result:`, {
-          userAnswer,
-          correctKey,
-          isCorrect
+        console.log('Normalized comparison:', {
+          userAnswer: normalizedUserAnswer,
+          correctKey: normalizedCorrectKey,
+          originalUserAnswer: userAnswer,
+          originalCorrectKey: correctKey
+        });
+        
+        // Direct comparison using normalized values
+        const isCorrect = normalizedUserAnswer === normalizedCorrectKey;
+        
+        console.log(`✅ Question ${question.id} final result:`, {
+          userAnswer: userAnswer,
+          correctKey: correctKey,
+          normalized_user: normalizedUserAnswer,
+          normalized_correct: normalizedCorrectKey,
+          isCorrect: isCorrect
         });
         
         // Create minimal question attempt structure
@@ -288,19 +321,49 @@ export const apiService = {
         
         if (isCorrect) {
           correctCount++;
+          console.log(`🎉 Question ${question.id} is CORRECT! Total correct so far: ${correctCount}`);
+        } else {
+          console.log(`❌ Question ${question.id} is WRONG!`);
         }
+      } else {
+        console.log(`⚠️ Question ${question.id}: No user answer provided`);
+        // Still create an attempt record for unanswered questions
+        questionAttempts.push({
+          question: question.id,
+          selected_option: null,
+          is_correct: false
+        });
       }
     });
     
     // Calculate score as percentage
     const score = questions.length > 0 ? (correctCount / questions.length) * 100 : 0;
     
-    console.log("Local calculation results:", {
-      score,
-      correctCount,
-      totalQuestions: questions.length,
-      questionAttempts
-    });
+    console.log("\n🏆 FINAL QUIZ CALCULATION RESULTS:");
+    console.log(`Correct answers: ${correctCount} out of ${questions.length}`);
+    console.log(`Score percentage: ${score}%`);
+    console.log(`Question attempts:`, questionAttempts.map(qa => ({
+      question: qa.question,
+      correct: qa.is_correct,
+      selected: qa.selected_option
+    })));
+    
+    if (correctCount === 0 && questions.length > 0) {
+      console.error("⚠️⚠️⚠️ WARNING: No correct answers found! This might indicate a comparison issue!");
+      console.log("Debug info for first question:");
+      if (questions[0]) {
+        const firstQ = questions[0];
+        const firstAnswer = answersData.answers[firstQ.id];
+        console.log("First question data:", {
+          id: firstQ.id,
+          userAnswer: firstAnswer,
+          correct_option: firstQ.correct_option,
+          correct_answer: firstQ.correct_answer,
+          userAnswerType: typeof firstAnswer,
+          correctOptionType: typeof firstQ.correct_option
+        });
+      }
+    }
     
     // Try to create a quiz attempt record using the manual endpoint
     try {
