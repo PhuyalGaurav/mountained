@@ -44,12 +44,12 @@ export default function ProgressChart({ analytics = [] }) {
       {
         label: "Average Score (%)",
         data: scoresData,
-        borderColor: "rgb(99, 102, 241)",
-        backgroundColor: "rgba(99, 102, 241, 0.1)",
+        borderColor: "rgb(249, 115, 22)", // Orange-500
+        backgroundColor: "rgba(249, 115, 22, 0.1)",
         borderWidth: 3,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: "rgb(99, 102, 241)",
+        pointBackgroundColor: "rgb(249, 115, 22)",
         pointBorderColor: "white",
         pointBorderWidth: 2,
         pointRadius: 6,
@@ -58,12 +58,12 @@ export default function ProgressChart({ analytics = [] }) {
       {
         label: "Study Time (hours)",
         data: studyTimeData,
-        borderColor: "rgb(16, 185, 129)",
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        borderColor: "rgb(59, 130, 246)", // Blue-500
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
         borderWidth: 3,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: "rgb(16, 185, 129)",
+        pointBackgroundColor: "rgb(59, 130, 246)",
         pointBorderColor: "white",
         pointBorderWidth: 2,
         pointRadius: 6,
