@@ -13,28 +13,34 @@ export const refreshMasteryScore = () => {
 };
 
 /**
+ * Refresh mastery score after a delay (useful after API calls)
+ */
+export const refreshMasteryScoreAfterDelay = (delay = 1000) => {
+  setTimeout(() => {
+    refreshMasteryScore();
+  }, delay);
+};
+
+/**
+ * Refresh mastery score multiple times with intervals (for important updates)
+ */
+export const refreshMasteryScoreWithRetry = (times = 3, interval = 2000) => {
+  for (let i = 0; i < times; i++) {
+    setTimeout(() => {
+      refreshMasteryScore();
+    }, i * interval);
+  }
+};
+
+/**
  * Hook to use mastery score refresh functionality
  * Call this in components where you want to trigger updates after actions
  */
 export const useMasteryScoreRefresh = () => {
   return {
     refreshMasteryScore,
-    
-    // Convenience method for refreshing after a delay (useful after API calls)
-    refreshAfterDelay: (delay = 1000) => {
-      setTimeout(() => {
-        refreshMasteryScore();
-      }, delay);
-    },
-    
-    // Method to refresh multiple times with intervals (for important updates)
-    refreshWithRetry: (times = 3, interval = 2000) => {
-      for (let i = 0; i < times; i++) {
-        setTimeout(() => {
-          refreshMasteryScore();
-        }, i * interval);
-      }
-    }
+    refreshAfterDelay: refreshMasteryScoreAfterDelay,
+    refreshWithRetry: refreshMasteryScoreWithRetry
   };
 };
 
@@ -51,33 +57,32 @@ export const REFRESH_SCENARIOS = {
 
 /**
  * Trigger refresh based on scenario with appropriate timing
+ * This is a regular function, not a hook, so it can be called anywhere
  */
 export const refreshForScenario = (scenario) => {
-  const { refreshAfterDelay, refreshWithRetry } = useMasteryScoreRefresh();
-  
   switch (scenario) {
     case REFRESH_SCENARIOS.QUIZ_COMPLETED:
       // Quiz completion is important, refresh multiple times
-      refreshWithRetry(3, 2000);
+      refreshMasteryScoreWithRetry(3, 2000);
       break;
     case REFRESH_SCENARIOS.CONTENT_GENERATED:
       // Content generation might affect mastery, refresh after delay
-      refreshAfterDelay(1500);
+      refreshMasteryScoreAfterDelay(1500);
       break;
     case REFRESH_SCENARIOS.MATERIAL_UPLOADED:
       // Material upload might create new progress entries
-      refreshAfterDelay(2000);
+      refreshMasteryScoreAfterDelay(2000);
       break;
     case REFRESH_SCENARIOS.STUDY_SESSION_COMPLETED:
       // Study session affects mastery significantly
-      refreshWithRetry(2, 3000);
+      refreshMasteryScoreWithRetry(2, 3000);
       break;
     case REFRESH_SCENARIOS.FLASHCARD_REVIEWED:
       // Regular flashcard review, single refresh
-      refreshAfterDelay(1000);
+      refreshMasteryScoreAfterDelay(1000);
       break;
     default:
       // Default refresh after short delay
-      refreshAfterDelay(1000);
+      refreshMasteryScoreAfterDelay(1000);
   }
 };
