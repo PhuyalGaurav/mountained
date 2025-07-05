@@ -5,14 +5,14 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
   const generateTasksForTopic = () => {
     const taskCounts = [2, 1, 3, 4, 2, 1, 3, 2, 4, 1, 3, 2]; // Varies 1-4
     const taskCount = taskCounts[topicIndex % taskCounts.length];
-    
+
     const taskTemplates = [
-      { title: `Study ${topic?.topic || 'Topic'} fundamentals`, type: "study" },
+      { title: `Study ${topic?.topic || "Topic"} fundamentals`, type: "study" },
       { title: `Practice exercises`, type: "practice" },
       { title: `Review notes`, type: "review" },
       { title: `Complete assignment`, type: "assignment" },
     ];
-    
+
     return taskTemplates.slice(0, taskCount).map((template, index) => ({
       id: index + 1,
       title: template.title,
@@ -50,12 +50,18 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
 
   const getTaskIcon = (type) => {
     switch (type) {
-      case 'study': return '📚';
-      case 'practice': return '✏️';
-      case 'review': return '📖';
-      case 'assignment': return '📝';
-      case 'custom': return '✅';
-      default: return '📋';
+      case "study":
+        return "📚";
+      case "practice":
+        return "✏️";
+      case "review":
+        return "📖";
+      case "assignment":
+        return "📝";
+      case "custom":
+        return "✅";
+      default:
+        return "📋";
     }
   };
 
@@ -67,12 +73,14 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
     <div>
       {/* Progress indicator */}
       <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-        <span>{completedCount} of {tasks.length} completed</span>
+        <span>
+          {completedCount} of {tasks.length} completed
+        </span>
         <span className="text-orange-600 font-medium">
           {Math.round(progressPercentage)}%
         </span>
       </div>
-      
+
       <div className="w-full bg-orange-100 rounded-full h-1.5 mb-4">
         <div
           className="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
@@ -87,7 +95,7 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
             key={task.id}
             className={`flex items-center space-x-3 p-2 rounded transition-colors ${
               task.completed
-                ? "bg-green-50 border border-green-200"
+                ? "bg-orange-50 border border-orange-200"
                 : "bg-gray-50 hover:bg-gray-100 border border-transparent"
             }`}
           >
@@ -128,13 +136,13 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
 
       {/* Add Task Section */}
       {showAddTask ? (
-        <div className="border border-gray-300 rounded p-2 bg-white">
+        <div className="border border-orange-200 rounded-md p-2 bg-orange-50">
           <input
             type="text"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
-            placeholder="Enter new task..."
-            className="w-full text-sm border-none outline-none"
+            placeholder="Add a task..."
+            className="w-full text-sm bg-transparent border-none outline-none placeholder-gray-500"
             onKeyPress={(e) => e.key === "Enter" && addTask()}
             autoFocus
           />
@@ -144,13 +152,13 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
                 setShowAddTask(false);
                 setNewTaskTitle("");
               }}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
             >
               Cancel
             </button>
             <button
               onClick={addTask}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-orange-600 hover:text-orange-700 font-medium px-2 py-1"
             >
               Add
             </button>
@@ -159,9 +167,9 @@ const TopicwiseTasks = ({ topic, topicIndex }) => {
       ) : (
         <button
           onClick={() => setShowAddTask(true)}
-          className="w-full text-left text-xs text-blue-600 hover:text-blue-700 p-2 border border-dashed border-gray-300 rounded hover:border-blue-300 transition-colors"
+          className="w-full text-left text-sm text-gray-500 hover:text-orange-600 p-2 border border-dashed border-gray-200 rounded-md hover:border-orange-300 transition-colors"
         >
-          + Add Task
+          + Add task
         </button>
       )}
     </div>

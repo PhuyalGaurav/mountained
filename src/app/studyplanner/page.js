@@ -88,12 +88,14 @@ const TasksComponent = () => {
               {/* Topic Box */}
               <div className="bg-white rounded-lg border border-orange-200 shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
-                  <h3 className="text-xl font-semibold text-white">{topic.topic}</h3>
+                  <h3 className="text-xl font-semibold text-white">
+                    {topic.topic}
+                  </h3>
                   {topic.subject && (
                     <p className="text-orange-100 text-sm">{topic.subject}</p>
                   )}
                 </div>
-                
+
                 <div className="p-4">
                   <TopicwiseTasks topic={topic} topicIndex={index} />
                 </div>
