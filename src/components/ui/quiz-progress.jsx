@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircle, XCircle, Circle, Clock, Target } from "lucide-react";
+import { CheckCircle, XCircle, Circle, Clock, Target, Info, Lightbulb } from "lucide-react";
 
 export function QuizProgressBar({ 
   currentQuestion, 
@@ -228,23 +228,38 @@ export function QuestionCard({
 
       {/* Review Information */}
       {showReview && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="text-sm space-y-2">
-            <div>
-              <span className="font-semibold text-gray-700">Your answer: </span>
-              <span className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                {userAnswer ? `${userAnswer.toUpperCase()}. ${question.options?.[userAnswer] || userAnswer}` : 'No answer'}
-              </span>
-            </div>
-            {correctAnswer && (
+        <div className="mt-6 space-y-4">
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-sm space-y-2">
               <div>
-                <span className="font-semibold text-gray-700">Correct answer: </span>
-                <span className="text-green-600 font-medium">
-                  {correctAnswer.toUpperCase()}. {question.options?.[correctAnswer] || correctAnswer}
+                <span className="font-semibold text-gray-700">Your answer: </span>
+                <span className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                  {userAnswer ? `${userAnswer.toUpperCase()}. ${question.options?.[userAnswer] || userAnswer}` : 'No answer'}
                 </span>
               </div>
-            )}
+              {correctAnswer && (
+                <div>
+                  <span className="font-semibold text-gray-700">Correct answer: </span>
+                  <span className="text-green-600 font-medium">
+                    {correctAnswer.toUpperCase()}. {question.options?.[correctAnswer] || correctAnswer}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Explanation Section */}
+          {question.explanation && (
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
+              <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                <Lightbulb className="w-5 h-5 text-blue-600 mr-2" />
+                Explanation
+              </h4>
+              <p className="text-blue-800 text-sm leading-relaxed">
+                {question.explanation}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
