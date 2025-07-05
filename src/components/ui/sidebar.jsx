@@ -15,6 +15,7 @@ import {
   Moon,
   Sun,
   GalleryHorizontalEnd,
+  CalendarCheck,
 } from "lucide-react";
 import { useTheme } from "@/app/services/theme-context";
 import Image from "next/image";
@@ -49,6 +50,11 @@ const sideBarItems = [
     name: "Flashcards",
     href: "/flashcards",
     icon: GalleryHorizontalEnd,
+  },
+  {
+    name: "Study Plaanner",
+    href: "/studyplanner",
+    icon: CalendarCheck,
   },
 ];
 
