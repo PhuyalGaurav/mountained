@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/app/services/auth-context";
 import { apiService } from "@/app/services/api";
+import courseContentService from "@/app/services/courseContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ import {
   Plus,
   X,
   Type,
+  CloudUpload,
 } from "lucide-react";
 
 export default function CreateQuizPage() {
@@ -49,6 +51,10 @@ export default function CreateQuizPage() {
   const [selectedMaterial, setSelectedMaterial] = useState(materialParam || '');
   const [generationType, setGenerationType] = useState('topic'); // 'topic', 'material', 'custom'
   const [customQuestions, setCustomQuestions] = useState([]);
+  
+  // File upload state
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // Fetch initial data
   useEffect(() => {
@@ -111,6 +117,98 @@ export default function CreateQuizPage() {
     }));
   };
 
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'text/plain',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.ms-powerpoint'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload a PDF, Word document, PowerPoint, or text file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please upload a file smaller than 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+    }
+  };
+
+  const uploadFile = async () => {
+    if (!selectedFile) return;
+
+    setUploadingFile(true);
+    try {
+      const response = await courseContentService.uploadLearningMaterial(selectedFile);
+      
+      console.log("Upload response:", response); // Debug log
+      
+      // Add the new material to the list and select it
+      setLearningMaterials(prev => {
+        const updated = [response, ...prev];
+        console.log("Updated learning materials:", updated); // Debug log
+        return updated;
+      });
+      
+      setSelectedMaterial(response.id);
+      console.log("Selected material ID:", response.id); // Debug log
+      
+      setSelectedFile(null);
+      
+      toast({
+        title: "Success!",
+        description: "File uploaded successfully and is ready for quiz generation.",
+      });
+      
+      // Reset the file input
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
+      
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      
+      let errorMessage = "Failed to upload file. Please try again.";
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.status === 413) {
+        errorMessage = "File is too large. Please upload a smaller file.";
+      }
+      
+      toast({
+        title: "Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
+  };
+
   const validateForm = () => {
     if (!formData.title.trim()) {
       toast({
@@ -130,13 +228,27 @@ export default function CreateQuizPage() {
       return false;
     }
 
-    if (generationType === 'material' && !selectedMaterial) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a learning material.",
-        variant: "destructive",
-      });
-      return false;
+    if (generationType === 'material') {
+      // Check if user has either selected an existing material or uploaded a new one
+      if (!selectedMaterial) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a learning material or upload a new file.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      // Ensure the selected material exists in the materials list
+      const materialExists = learningMaterials.some(material => material.id === selectedMaterial);
+      if (!materialExists) {
+        toast({
+          title: "Validation Error",
+          description: "Selected learning material is not valid. Please select a different material or upload a new file.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     if (generationType === 'custom' && customQuestions.length === 0) {
@@ -152,6 +264,13 @@ export default function CreateQuizPage() {
   };
 
   const generateQuiz = async () => {
+    console.log("Generate quiz called with:", {
+      generationType,
+      selectedMaterial,
+      learningMaterials: learningMaterials.length,
+      formData
+    }); // Debug log
+    
     if (!validateForm()) return;
 
     setLoading(true);
@@ -163,6 +282,8 @@ export default function CreateQuizPage() {
           num_questions: formData.numQuestions,
           custom_instructions: formData.customInstructions || undefined,
         };
+        
+        console.log("Generating quiz with data:", generateData, "for material:", selectedMaterial); // Debug log
         
         const response = await apiService.generateQuiz(selectedMaterial, generateData);
         
@@ -449,32 +570,127 @@ export default function CreateQuizPage() {
               Learning Material Selection
             </h2>
             
-            {learningMaterials.length > 0 ? (
-              <div>
-                <Label>Select a learning material:</Label>
-                <select
-                  value={selectedMaterial}
-                  onChange={(e) => setSelectedMaterial(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Choose a material...</option>
-                  {learningMaterials.map((material) => (
-                    <option key={material.id} value={material.id}>
-                      {material.file.split('/').pop()} - Uploaded {new Date(material.uploaded_at).toLocaleDateString()}
-                    </option>
-                  ))}
-                </select>
+            {/* File Upload Section */}
+            <div className="mb-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+              <div className="text-center">
+                <CloudUpload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <h3 className="text-lg font-medium mb-2">Upload New File</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Upload a PDF, Word document, PowerPoint, or text file to generate quiz questions
+                </p>
+                
+                {!selectedFile ? (
+                  <div>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <CloudUpload className="h-4 w-4 mr-2" />
+                      Choose File
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Supported formats: PDF, Word, PowerPoint, Text (Max: 10MB)
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <Upload className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={uploadFile}
+                          disabled={uploadingFile}
+                          size="sm"
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <CloudUpload className="h-4 w-4 mr-2" />
+                              Upload
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={removeSelectedFile}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8">
+            </div>
+
+            {/* Existing Materials Section */}
+            {learningMaterials.length > 0 && (
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-3">Or Select from Existing Materials</h3>
+                <div>
+                  <Label>Select a learning material:</Label>
+                  <select
+                    value={selectedMaterial}
+                    onChange={(e) => setSelectedMaterial(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Choose a material...</option>
+                    {learningMaterials.map((material) => (
+                      <option key={material.id} value={material.id}>
+                        {material.file.split('/').pop()} - Uploaded {new Date(material.uploaded_at).toLocaleDateString()}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {/* Show selected material confirmation */}
+                  {selectedMaterial && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                          <Upload className="h-3 w-3 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-green-800">
+                            Material Selected: {learningMaterials.find(m => m.id === selectedMaterial)?.file.split('/').pop()}
+                          </p>
+                          <p className="text-xs text-green-600">Ready for quiz generation</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {learningMaterials.length === 0 && (
+              <div className="text-center py-8 border-t">
                 <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">No learning materials found.</p>
-                <Button
-                  onClick={() => router.push('/courses')}
-                  variant="outline"
-                >
-                  Upload Learning Materials
-                </Button>
+                <p className="text-gray-600 mb-4">No existing learning materials found.</p>
+                <p className="text-sm text-gray-500">Upload a file above to get started!</p>
               </div>
             )}
 
