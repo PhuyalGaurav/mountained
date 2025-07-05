@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/services/auth-context";
+import { apiService } from "@/app/services/api";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -65,6 +66,28 @@ export function Sidebar() {
   const { isAuthenticated, logout, user } = useAuth();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [masteryScore, setMasteryScore] = React.useState(0);
+
+  // Fetch mastery score from userprogresslist API
+  React.useEffect(() => {
+    const fetchMasteryScore = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const userProgressList = await apiService.getUserProgress_list();
+          if (userProgressList && userProgressList.length > 0) {
+            // Get the latest or average mastery score
+            const latestProgress = userProgressList[0];
+            setMasteryScore(latestProgress.mastery_score || 0);
+          }
+        } catch (error) {
+          console.error("Failed to fetch mastery score:", error);
+          setMasteryScore(0);
+        }
+      }
+    };
+
+    fetchMasteryScore();
+  }, [isAuthenticated, user]);
 
   // Don't show sidebar on login page or if not authenticated
   if (!isAuthenticated || pathname === "/login") {
@@ -73,18 +96,27 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        {" "}
+      {/* Fixed top bar with mobile menu button */}
+      <div
+        className={`lg:hidden ${
+          isOpen ? "" : "bg-gray-50"
+        } fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-[15%]`}
+      >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-md bg-white shadow-md focus:outline-none"
+          className={
+            isOpen
+              ? "hidden"
+              : "p-2 rounded-md bg-orange/90 transition-colors focus:outline-none"
+          }
+          aria-label="Toggle menu"
         >
-          <Menu
-            className={isOpen ? "hidden" : "h-6 w-6 text-foreground bg-white"}
-          />
+          <Menu className="h-6 w-6 text-white" />
         </button>
       </div>
+
+      {/* Add top padding to main content on mobile */}
+      <div className="lg:hidden h-14" />
 
       {/* Sidebar */}
       <div
@@ -145,24 +177,22 @@ export function Sidebar() {
                   </span>
                 </div>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {user?.username || user?.email || "User"}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.email}
-                </p>
+              <div className="flex flex-row gap-10 align-center justify-center">
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {user?.username || user?.email || "User"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                <span className="text-white bg-[#ffd200] w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold shadow-lg transform hover:scale-105 transition-transform duration-200 relative">
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#ffd2200] to-[#fff176] rounded-full"></div>
+                  <div className="relative z-10 font-bold text-[#2c1810]">
+                    {masteryScore}
+                  </div>
+                </span>
               </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={logout}
-                className="flex items-center px-4 py-2 text-sm font-medium text-foreground rounded-lg hover:bg-accent hover:text-primary transition-colors"
-              >
-                <LogOut className="mr-3 h-4 w-4" />
-                Logout
-              </button>
             </div>
           </div>
         </div>

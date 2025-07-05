@@ -35,4 +35,13 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-geist-sans);
+  margin: 0;
+  padding: 0;
+}
+
+@media screen and (max-width: 1024px) {
+  body {
+    padding: 3rem;
+    background-color: #f9fafb;
+  }
 }

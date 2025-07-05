@@ -179,7 +179,7 @@ export const apiService = {
     const config = {};
     if (data instanceof FormData) {
       config.headers = {
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       };
     }
     return api.post("/exported-quizzes/", data, config);
@@ -254,29 +254,36 @@ export const apiService = {
   generateQuizQuestions: (id, data) =>
     api.post(`/quizzes/${id}/generate_questions/`, data),
   getQuizQuestions: (id) => api.get(`/quizzes/${id}/questions/`),
-  
+
   // Quiz submission - try backend first, fallback to local calculation
   submitQuizAnswers: async (quizId, answersData, questions) => {
     console.log("=== API SERVICE SUBMISSION DEBUG ===");
     console.log("Quiz ID:", quizId);
     console.log("Answers data:", answersData);
     console.log("Questions:", questions);
-    
+
     // First, try to submit to the backend quiz submission endpoint
     try {
-      console.log("Attempting to submit to backend quiz submission endpoint...");
-      const response = await api.post(`/quizzes/${quizId}/submit_answers/`, answersData);
+      console.log(
+        "Attempting to submit to backend quiz submission endpoint..."
+      );
+      const response = await api.post(
+        `/quizzes/${quizId}/submit_answers/`,
+        answersData
+      );
       console.log("✅ Backend submission successful:", response.data);
-      
+
       // Validate the response data before returning
       const responseData = response.data;
-      
+
       // Check if we got a valid score
-      if (typeof responseData.score === 'number' && responseData.score >= 0) {
+      if (typeof responseData.score === "number" && responseData.score >= 0) {
         console.log("✅ Backend returned valid score:", responseData.score);
         return response;
       } else {
-        console.warn("⚠️ Backend returned invalid/missing score, falling back to local calculation");
+        console.warn(
+          "⚠️ Backend returned invalid/missing score, falling back to local calculation"
+        );
         console.log("Backend response data:", responseData);
         // Don't return early - fall through to local calculation
       }
@@ -284,60 +291,82 @@ export const apiService = {
       console.log("❌ Backend quiz submission failed:", backendError);
       console.log("Status:", backendError.response?.status);
       console.log("Error data:", backendError.response?.data);
-      
+
       // If backend submission fails, fall back to local calculation and manual attempt creation
-      console.log("Falling back to local calculation and manual quiz attempt creation...");
+      console.log(
+        "Falling back to local calculation and manual quiz attempt creation..."
+      );
     }
-    
+
     // Calculate quiz results locally
     const questionAttempts = [];
     let correctCount = 0;
-    
+
     // Process each question and determine if the answer is correct
-    questions.forEach(question => {
+    questions.forEach((question) => {
       const userAnswer = answersData.answers[question.id];
       console.log(`\n=== Processing question ${question.id} ===`);
-      console.log('User answer:', userAnswer, '(type:', typeof userAnswer, ')');
-      console.log('Question correct_option:', question.correct_option, '(type:', typeof question.correct_option, ')');
-      console.log('Question correct_answer:', question.correct_answer, '(type:', typeof question.correct_answer, ')');
-      
+      console.log("User answer:", userAnswer, "(type:", typeof userAnswer, ")");
+      console.log(
+        "Question correct_option:",
+        question.correct_option,
+        "(type:",
+        typeof question.correct_option,
+        ")"
+      );
+      console.log(
+        "Question correct_answer:",
+        question.correct_answer,
+        "(type:",
+        typeof question.correct_answer,
+        ")"
+      );
+
       if (userAnswer) {
         // Get the correct key (could be from correct_option or correct_answer field)
         const correctKey = question.correct_option || question.correct_answer;
-        console.log('Determined correct key:', correctKey, '(type:', typeof correctKey, ')');
-        
+        console.log(
+          "Determined correct key:",
+          correctKey,
+          "(type:",
+          typeof correctKey,
+          ")"
+        );
+
         // Normalize both values to strings and trim whitespace for comparison
         const normalizedUserAnswer = String(userAnswer).trim().toLowerCase();
         const normalizedCorrectKey = String(correctKey).trim().toLowerCase();
-        
-        console.log('Normalized comparison:', {
+
+        console.log("Normalized comparison:", {
           userAnswer: normalizedUserAnswer,
           correctKey: normalizedCorrectKey,
           originalUserAnswer: userAnswer,
-          originalCorrectKey: correctKey
+          originalCorrectKey: correctKey,
         });
-        
+
         // Direct comparison using normalized values
         const isCorrect = normalizedUserAnswer === normalizedCorrectKey;
-        
+
         console.log(`✅ Question ${question.id} final result:`, {
           userAnswer: userAnswer,
           correctKey: correctKey,
           normalized_user: normalizedUserAnswer,
           normalized_correct: normalizedCorrectKey,
-          isCorrect: isCorrect
+          isCorrect: isCorrect,
         });
-        
+
         // Create minimal question attempt structure
         questionAttempts.push({
           question: question.id,
           selected_option: userAnswer,
-          is_correct: isCorrect
+          is_correct: isCorrect,
         });
-        
+
         if (isCorrect) {
           correctCount++;
-          console.log(`🎉 Question ${question.id} is CORRECT! Total correct so far: ${correctCount}`);
+          console.log(
+            `🎉 Question ${question.id} is CORRECT! Total correct so far: ${correctCount}`
+          );
         } else {
           console.log(`❌ Question ${question.id} is WRONG!`);
         }
@@ -347,25 +376,31 @@ export const apiService = {
         questionAttempts.push({
           question: question.id,
           selected_option: null,
-          is_correct: false
+          is_correct: false,
         });
       }
     });
-    
+
     // Calculate score as percentage
-    const score = questions.length > 0 ? (correctCount / questions.length) * 100 : 0;
-    
+    const score =
+      questions.length > 0 ? (correctCount / questions.length) * 100 : 0;
+
     console.log("\n🏆 FINAL QUIZ CALCULATION RESULTS:");
     console.log(`Correct answers: ${correctCount} out of ${questions.length}`);
     console.log(`Score percentage: ${score}%`);
-    console.log(`Question attempts:`, questionAttempts.map(qa => ({
-      question: qa.question,
-      correct: qa.is_correct,
-      selected: qa.selected_option
-    })));
-    
+    console.log(
+      `Question attempts:`,
+      questionAttempts.map((qa) => ({
+        question: qa.question,
+        correct: qa.is_correct,
+        selected: qa.selected_option,
+      }))
+    );
+
     if (correctCount === 0 && questions.length > 0) {
-      console.error("⚠️⚠️⚠️ WARNING: No correct answers found! This might indicate a comparison issue!");
+      console.error(
+        "⚠️⚠️⚠️ WARNING: No correct answers found! This might indicate a comparison issue!"
+      );
       console.log("Debug info for first question:");
       if (questions[0]) {
         const firstQ = questions[0];
@@ -376,63 +411,67 @@ export const apiService = {
           correct_option: firstQ.correct_option,
           correct_answer: firstQ.correct_answer,
           userAnswerType: typeof firstAnswer,
-          correctOptionType: typeof firstQ.correct_option
+          correctOptionType: typeof firstQ.correct_option,
         });
       }
     }
-    
+
     // Try to create a quiz attempt record using the manual endpoint
     try {
       console.log("Attempting to create quiz attempt record...");
       const attemptData = {
         quiz: parseInt(quizId),
         score: parseFloat(score.toFixed(2)),
-        question_attempts: questionAttempts
+        question_attempts: questionAttempts,
       };
-      
+
       console.log("Creating attempt with data:", attemptData);
       const attemptResponse = await api.post("/quiz-attempts/", attemptData);
-      console.log("✅ Quiz attempt created successfully:", attemptResponse.data);
-      
+      console.log(
+        "✅ Quiz attempt created successfully:",
+        attemptResponse.data
+      );
+
       return {
         data: {
           attempt_id: attemptResponse.data.id,
           score: parseFloat(score.toFixed(2)),
           total_questions: questions.length,
           correct_answers: correctCount,
-          results: questionAttempts.map(qa => ({
+          results: questionAttempts.map((qa) => ({
             question_id: qa.question,
             is_correct: qa.is_correct,
             selected_option: qa.selected_option,
-            user_answer: qa.selected_option
+            user_answer: qa.selected_option,
           })),
           _fallback_used: true,
-          _message: "Results calculated locally but saved to backend"
-        }
+          _message: "Results calculated locally but saved to backend",
+        },
       };
     } catch (attemptError) {
       console.error("❌ Failed to create quiz attempt record:", attemptError);
       console.log("Attempt error status:", attemptError.response?.status);
       console.log("Attempt error data:", attemptError.response?.data);
-      
+
       // Complete fallback - just return local results without saving
       const mockAttemptId = Date.now();
-      
+
       return {
         data: {
           attempt_id: mockAttemptId,
           score: parseFloat(score.toFixed(2)),
           total_questions: questions.length,
           correct_answers: correctCount,
-          results: questionAttempts.map(qa => ({
+          results: questionAttempts.map((qa) => ({
             question_id: qa.question,
             is_correct: qa.is_correct,
             selected_option: qa.selected_option,
-            user_answer: qa.selected_option
+            user_answer: qa.selected_option,
           })),
           _mock_response: true,
-          _error: "Backend endpoints not available - results calculated locally only"
-        }
+          _error:
+            "Backend endpoints not available - results calculated locally only",
+        },
       };
     }
   },
@@ -442,7 +481,7 @@ export const apiService = {
     console.log("=== QUIZ DEBUG INFO ===");
     console.log("Quiz ID:", quizId);
     console.log("Total questions:", questions.length);
-    
+
     questions.forEach((question, index) => {
       console.log(`\n--- Question ${index + 1} (ID: ${question.id}) ---`);
       console.log("Question text:", question.question_text);
@@ -451,21 +490,30 @@ export const apiService = {
       console.log("Options type:", typeof question.options);
       console.log("Correct option:", question.correct_option);
       console.log("Correct answer:", question.correct_answer);
-      
+
       // Check if correct_option exists and is valid
       if (!question.correct_option && !question.correct_answer) {
-        console.warn("⚠️ Missing correct answer data for question", question.id);
+        console.warn(
+          "⚠️ Missing correct answer data for question",
+          question.id
+        );
       }
-      
+
       // Check if options format is correct
       if (question.options) {
-        if (typeof question.options === 'object' && !Array.isArray(question.options)) {
+        if (
+          typeof question.options === "object" &&
+          !Array.isArray(question.options)
+        ) {
           const optionKeys = Object.keys(question.options);
           console.log("Option keys:", optionKeys);
-          
+
           const correctKey = question.correct_option || question.correct_answer;
           if (correctKey && !optionKeys.includes(correctKey)) {
-            console.warn(`⚠️ Correct key "${correctKey}" not found in option keys:`, optionKeys);
+            console.warn(
+              `⚠️ Correct key "${correctKey}" not found in option keys:`,
+              optionKeys
+            );
           }
         }
       }
@@ -489,6 +537,7 @@ export const apiService = {
 
   // User Progress
   getUserProgress: () => api.get("/user-progress/"),
+  getUserProgress_list: () => api.get("/user-progress_list"),
   getUserProgressById: (id) => api.get(`/user-progress/${id}/`),
 
   // Users - New endpoints in v2
