@@ -197,7 +197,23 @@ export const apiService = {
 
   // Learning Materials
   getLearningMaterials: () => api.get("/learning-materials/"),
-  createLearningMaterial: (data) => api.post("/learning-materials/", data),
+  createLearningMaterial: (data) => {
+    // Handle FormData separately from JSON data
+    const config = {};
+    if (data instanceof FormData) {
+      // Don't set Content-Type for FormData, let browser set it with boundary
+      config.headers = {};
+    }
+    return api.post("/learning-materials/", data, config);
+  },
+  uploadLearningMaterial: (data) => {
+    // Alias for createLearningMaterial to make upload intent clearer
+    const config = {};
+    if (data instanceof FormData) {
+      config.headers = {};
+    }
+    return api.post("/learning-materials/", data, config);
+  },
   getLearningMaterial: (id) => api.get(`/learning-materials/${id}/`),
   updateLearningMaterial: (id, data) =>
     api.put(`/learning-materials/${id}/`, data),
